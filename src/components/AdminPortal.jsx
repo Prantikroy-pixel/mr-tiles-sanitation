@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Plus, Edit2, Trash2, Check, X, AlertTriangle, Package, DollarSign, Layers, RefreshCw } from 'lucide-react';
+import { ShieldCheck, Plus, Edit2, Trash2, Check, X, AlertTriangle, Package, RefreshCw } from 'lucide-react';
 
 export default function AdminPortal({ 
   products, 
@@ -32,31 +32,44 @@ export default function AdminPortal({
   const [newFinish, setNewFinish] = useState('High Gloss Polished');
   const [newMaterial, setNewMaterial] = useState('Vitrified Porcelain');
   const [newDescription, setNewDescription] = useState('');
-  const [newImage, setNewImage] = useState('/images/regal-white-marble.png');
+  const [newImage, setNewImage] = useState('images/regal-white-marble.png');
 
-  // Handle Login Submit
+  // Handle Login Submit (API + Static Fallback)
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setLoggingIn(true);
     setLoginError('');
 
+    // Try Backend API First
     try {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
-      const data = await res.json();
-      if (data.success) {
-        onLogin(data.token);
-      } else {
-        setLoginError(data.message || 'Invalid login details');
+      if (res.ok) {
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data.success) {
+            onLogin(data.token);
+            setLoggingIn(false);
+            return;
+          }
+        }
       }
     } catch (err) {
-      setLoginError('Server error connecting to authentication API');
-    } finally {
-      setLoggingIn(false);
+      // Backend not running on static host like Netlify
     }
+
+    // Static Fallback Check
+    if (username.trim() === 'admin' && password.trim() === 'admin123') {
+      const fallbackToken = 'mr_admin_token_static_' + Date.now();
+      onLogin(fallbackToken);
+    } else {
+      setLoginError('Invalid credentials! Default: admin / admin123');
+    }
+    setLoggingIn(false);
   };
 
   // Start Inline Editing
@@ -102,57 +115,57 @@ export default function AdminPortal({
   // If Not Authenticated, Render Login Screen
   if (!adminToken) {
     return (
-      <div style={{ maxWidth: '440px', margin: '4rem auto', padding: '0 1.5rem' }}>
-        <div className="glass-panel" style={{ borderRadius: 'var(--radius-lg)', padding: '2.5rem' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <div style={{ width: '56px', height: '56px', background: 'linear-gradient(135deg, var(--accent-gold), var(--accent-amber))', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', margin: '0 auto 1rem', boxShadow: 'var(--shadow-gold)' }}>
-              <ShieldCheck size={32} />
+      <div style={{ maxWidth: '440px', margin: '3rem auto', padding: '0 1rem' }}>
+        <div className="glass-panel" style={{ borderRadius: 'var(--radius-lg)', padding: '2rem 1.5rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+            <div style={{ width: '52px', height: '52px', background: 'linear-gradient(135deg, var(--accent-gold), var(--accent-amber))', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', margin: '0 auto 0.85rem', boxShadow: 'var(--shadow-gold)' }}>
+              <ShieldCheck size={28} />
             </div>
-            <h2 style={{ fontSize: '1.6rem', color: '#fff', marginBottom: '0.25rem' }}>Admin Portal Login</h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>M R Tiles & Sanitation Manager Portal</p>
+            <h2 style={{ fontSize: '1.5rem', color: '#fff', marginBottom: '0.2rem' }}>Admin Portal Login</h2>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>M R Tiles & Sanitation Manager Portal</p>
           </div>
 
           {loginError && (
-            <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239,68,68,0.4)', color: '#f87171', padding: '0.75rem', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239,68,68,0.4)', color: '#f87171', padding: '0.65rem 0.85rem', borderRadius: '8px', fontSize: '0.82rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <AlertTriangle size={16} /> {loginError}
             </div>
           )}
 
           <form onSubmit={handleLoginSubmit}>
-            <div style={{ marginBottom: '1.25rem' }}>
-              <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Username</label>
+            <div style={{ marginBottom: '1.1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Username</label>
               <input 
                 type="text"
                 required
                 placeholder="admin"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.75rem 0.9rem', color: '#fff', fontSize: '0.95rem' }}
+                style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.65rem 0.8rem', color: '#fff', fontSize: '0.9rem' }}
               />
             </div>
 
-            <div style={{ marginBottom: '1.75rem' }}>
-              <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Password</label>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Password</label>
               <input 
                 type="password"
                 required
                 placeholder="••••••••"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.75rem 0.9rem', color: '#fff', fontSize: '0.95rem' }}
+                style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.65rem 0.8rem', color: '#fff', fontSize: '0.9rem' }}
               />
             </div>
 
             <button 
               type="submit" 
               className="btn-primary" 
-              style={{ width: '100%', justifyContent: 'center', padding: '0.85rem' }}
+              style={{ width: '100%', justifyContent: 'center', padding: '0.75rem' }}
               disabled={loggingIn}
             >
               {loggingIn ? 'Authenticating...' : 'Sign In to Dashboard'}
             </button>
 
-            <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+            <div style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
               🔑 Default Credentials: Username: <code style={{ color: 'var(--accent-gold-bright)' }}>admin</code> | Password: <code style={{ color: 'var(--accent-gold-bright)' }}>admin123</code>
             </div>
           </form>
@@ -171,16 +184,16 @@ export default function AdminPortal({
       {/* Header Bar */}
       <div className="admin-header">
         <div>
-          <h1 style={{ fontSize: '2rem', color: '#fff' }}>Stock & Price Control Center</h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Real-time inventory sync for M R Tiles & Sanitation catalog</p>
+          <h1 style={{ fontSize: '1.8rem', color: '#fff' }}>Stock & Price Control Center</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Real-time inventory sync for M R Tiles & Sanitation catalog</p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button className="btn-secondary" onClick={onRefresh} style={{ padding: '0.6rem 1rem' }}>
-            <RefreshCw size={16} /> Sync Catalog
+        <div style={{ display: 'flex', gap: '0.5rem', width: '100%', maxWidth: '380px' }}>
+          <button className="btn-secondary" onClick={onRefresh} style={{ padding: '0.6rem 0.85rem', fontSize: '0.85rem', flex: 1, justifyContent: 'center' }}>
+            <RefreshCw size={14} /> Sync Catalog
           </button>
-          <button className="btn-primary" onClick={() => setShowAddModal(true)}>
-            <Plus size={18} /> Add New Tile / Item
+          <button className="btn-primary" onClick={() => setShowAddModal(true)} style={{ padding: '0.6rem 0.85rem', fontSize: '0.85rem', flex: 1.2, justifyContent: 'center' }}>
+            <Plus size={16} /> Add Tile / Item
           </button>
         </div>
       </div>
@@ -236,34 +249,34 @@ export default function AdminPortal({
               return (
                 <tr key={p.id}>
                   <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                      <img src={p.image} alt={p.name} className="table-img" onError={(e) => { e.target.src = '/images/regal-white-marble.png'; }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <img src={p.image} alt={p.name} className="table-img" onError={(e) => { e.target.src = 'images/regal-white-marble.png'; }} />
                       <div>
                         <div style={{ fontWeight: '700', color: '#fff' }}>{p.name}</div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{p.dimensions}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.dimensions}</div>
                       </div>
                     </div>
                   </td>
 
                   <td>
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{p.categoryLabel || p.category}</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{p.categoryLabel || p.category}</span>
                   </td>
 
                   <td>
                     {isEditing ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
                         <span style={{ color: 'var(--accent-gold-bright)', fontWeight: '700' }}>₹</span>
                         <input 
                           type="number"
                           value={editPrice}
                           onChange={e => setEditPrice(e.target.value)}
-                          style={{ width: '80px', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--accent-gold)', borderRadius: '4px', padding: '0.3rem', color: '#fff', fontWeight: '700' }}
+                          style={{ width: '75px', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--accent-gold)', borderRadius: '4px', padding: '0.25rem', color: '#fff', fontWeight: '700' }}
                         />
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>/{p.unit}</span>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>/{p.unit}</span>
                       </div>
                     ) : (
                       <span style={{ fontWeight: '700', color: 'var(--accent-gold-bright)' }}>
-                        ₹{p.price.toLocaleString('en-IN')} <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'normal' }}>/{p.unit}</span>
+                        ₹{p.price.toLocaleString('en-IN')} <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 'normal' }}>/{p.unit}</span>
                       </span>
                     )}
                   </td>
@@ -274,7 +287,7 @@ export default function AdminPortal({
                         type="number"
                         value={editStock}
                         onChange={e => setEditStock(e.target.value)}
-                        style={{ width: '80px', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--accent-gold)', borderRadius: '4px', padding: '0.3rem', color: '#fff', fontWeight: '700' }}
+                        style={{ width: '75px', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--accent-gold)', borderRadius: '4px', padding: '0.25rem', color: '#fff', fontWeight: '700' }}
                       />
                     ) : (
                       <span style={{ fontWeight: '600', color: '#fff' }}>
@@ -322,27 +335,27 @@ export default function AdminPortal({
       {/* Add New Product Modal */}
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-content glass-panel" onClick={e => e.stopPropagation()} style={{ maxWidth: '580px' }}>
+          <div className="modal-content glass-panel" onClick={e => e.stopPropagation()} style={{ maxWidth: '560px' }}>
             <button className="modal-close" onClick={() => setShowAddModal(false)}><X size={18} /></button>
 
-            <h3 style={{ fontSize: '1.4rem', color: '#fff', marginBottom: '1.25rem' }}>Add New Product / Tile to Store</h3>
+            <h3 style={{ fontSize: '1.3rem', color: '#fff', marginBottom: '1rem' }}>Add New Product / Tile to Store</h3>
 
             <form onSubmit={handleCreateProduct}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '0.85rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Product Name *</label>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Product Name *</label>
                   <input 
                     type="text"
                     required
                     placeholder="e.g. Italian Calacatta Marble"
                     value={newName}
                     onChange={e => setNewName(e.target.value)}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.65rem 0.8rem', color: '#fff' }}
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Category *</label>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Category *</label>
                   <select 
                     value={newCategory}
                     onChange={e => {
@@ -350,7 +363,7 @@ export default function AdminPortal({
                       if (e.target.value.includes('tiles') || e.target.value.includes('kitchen')) setNewUnit('sq.ft');
                       else setNewUnit('piece');
                     }}
-                    style={{ width: '100%', background: '#111827', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.65rem 0.8rem', color: '#fff' }}
+                    style={{ width: '100%', background: '#111827', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
                   >
                     <option value="floor-tiles">Floor Tiles</option>
                     <option value="wall-tiles">Wall Tiles</option>
@@ -360,25 +373,25 @@ export default function AdminPortal({
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.85rem', marginBottom: '0.85rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Price (₹) *</label>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Price (₹) *</label>
                   <input 
                     type="number"
                     required
                     placeholder="65"
                     value={newPrice}
                     onChange={e => setNewPrice(e.target.value)}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.65rem 0.8rem', color: '#fff' }}
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Unit *</label>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Unit *</label>
                   <select 
                     value={newUnit}
                     onChange={e => setNewUnit(e.target.value)}
-                    style={{ width: '100%', background: '#111827', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.65rem 0.8rem', color: '#fff' }}
+                    style={{ width: '100%', background: '#111827', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
                   >
                     <option value="sq.ft">per sq.ft</option>
                     <option value="piece">per piece</option>
@@ -387,55 +400,55 @@ export default function AdminPortal({
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Initial Stock *</label>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Stock *</label>
                   <input 
                     type="number"
                     required
                     placeholder="1000"
                     value={newStock}
                     onChange={e => setNewStock(e.target.value)}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.65rem 0.8rem', color: '#fff' }}
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '0.85rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Dimensions</label>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Dimensions</label>
                   <input 
                     type="text"
                     placeholder="2x4 ft (600x1200 mm)"
                     value={newDimensions}
                     onChange={e => setNewDimensions(e.target.value)}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.65rem 0.8rem', color: '#fff' }}
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Finish & Polish</label>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Finish & Polish</label>
                   <input 
                     type="text"
                     placeholder="High Gloss Polished"
                     value={newFinish}
                     onChange={e => setNewFinish(e.target.value)}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.65rem 0.8rem', color: '#fff' }}
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
                   />
                 </div>
               </div>
 
               <div style={{ marginBottom: '1.25rem' }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Description</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Description</label>
                 <textarea 
                   rows="2"
                   placeholder="Premium vitrified porcelain floor tile with anti-stain glaze..."
                   value={newDescription}
                   onChange={e => setNewDescription(e.target.value)}
-                  style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.65rem 0.8rem', color: '#fff' }}
+                  style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
                 />
               </div>
 
               <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-                <Plus size={18} /> Add Product to Inventory
+                <Plus size={16} /> Add Product to Inventory
               </button>
             </form>
           </div>
