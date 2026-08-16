@@ -9,7 +9,6 @@ export default function InquiryModal({ product, initialNote, onClose }) {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Generate formatted WhatsApp message link
   const getWhatsAppLink = () => {
     const storePhone = '916001399842';
     const prodName = product ? product.name : 'General Inquiry';
@@ -53,14 +52,14 @@ export default function InquiryModal({ product, initialNote, onClose }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass-panel" onClick={e => e.stopPropagation()}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose}><X size={18} /></button>
 
         {submitted ? (
           <div style={{ textAlign: 'center', padding: '1.5rem 0.5rem' }}>
-            <CheckCircle2 size={52} style={{ color: '#34d399', margin: '0 auto 0.85rem' }} />
-            <h3 style={{ fontSize: '1.4rem', color: '#fff', marginBottom: '0.4rem' }}>Inquiry Prepared!</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '1.5rem' }}>
+            <CheckCircle2 size={48} style={{ color: '#16a34a', margin: '0 auto 0.75rem' }} />
+            <h3 style={{ fontSize: '1.3rem', color: 'var(--text-dark)', marginBottom: '0.35rem' }}>Inquiry Prepared!</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
               Click below to send your formatted quote request directly to M R Tiles & Sanitation sales desk on WhatsApp:
             </p>
 
@@ -69,9 +68,9 @@ export default function InquiryModal({ product, initialNote, onClose }) {
               target="_blank" 
               rel="noopener noreferrer"
               className="btn-whatsapp"
-              style={{ width: '100%', justifyContent: 'center', padding: '0.85rem', marginBottom: '1rem', fontSize: '0.95rem' }}
+              style={{ width: '100%', justifyContent: 'center', padding: '0.75rem', marginBottom: '0.85rem', fontSize: '0.9rem' }}
             >
-              <MessageSquare size={18} /> Send Quote Request on WhatsApp
+              <MessageSquare size={16} /> Send Quote Request on WhatsApp
             </a>
 
             <button className="btn-secondary" onClick={onClose} style={{ width: '100%', justifyContent: 'center' }}>
@@ -80,8 +79,8 @@ export default function InquiryModal({ product, initialNote, onClose }) {
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
-            <h3 style={{ fontSize: '1.3rem', color: '#fff', marginBottom: '0.25rem' }}>Request Quote & Best Price</h3>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1.1rem' }}>
+            <h3 style={{ fontSize: '1.25rem', color: 'var(--text-dark)', marginBottom: '0.2rem' }}>Request Quote & Best Price</h3>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
               {product ? `Inquiring about: ${product.name} (₹${product.price}/${product.unit})` : 'Get trade price quote from Silchar showroom team'}
             </p>
 
@@ -93,7 +92,7 @@ export default function InquiryModal({ product, initialNote, onClose }) {
                 placeholder="e.g. Rahul Roy"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
+                style={{ width: '100%', background: '#ffffff', border: '1px solid var(--border-dark)', borderRadius: '6px', padding: '0.55rem 0.75rem', color: 'var(--text-dark)', fontSize: '0.88rem' }}
               />
             </div>
 
@@ -105,7 +104,7 @@ export default function InquiryModal({ product, initialNote, onClose }) {
                 placeholder="+91 98765 43210"
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
+                style={{ width: '100%', background: '#ffffff', border: '1px solid var(--border-dark)', borderRadius: '6px', padding: '0.55rem 0.75rem', color: 'var(--text-dark)', fontSize: '0.88rem' }}
               />
             </div>
 
@@ -116,22 +115,22 @@ export default function InquiryModal({ product, initialNote, onClose }) {
                 placeholder="rahul@example.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
+                style={{ width: '100%', background: '#ffffff', border: '1px solid var(--border-dark)', borderRadius: '6px', padding: '0.55rem 0.75rem', color: 'var(--text-dark)', fontSize: '0.88rem' }}
               />
             </div>
 
-            <div style={{ marginBottom: '1.25rem' }}>
+            <div style={{ marginBottom: '1.1rem' }}>
               <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Project Details / Room Calculations</label>
               <textarea 
                 rows="3"
                 placeholder="Room size, delivery date, discount request..."
                 value={message}
                 onChange={e => setMessage(e.target.value)}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontFamily: 'inherit', fontSize: '0.88rem' }}
+                style={{ width: '100%', background: '#ffffff', border: '1px solid var(--border-dark)', borderRadius: '6px', padding: '0.55rem 0.75rem', color: 'var(--text-dark)', fontFamily: 'inherit', fontSize: '0.88rem' }}
               />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <a 
                 href={getWhatsAppLink()} 
                 target="_blank" 
