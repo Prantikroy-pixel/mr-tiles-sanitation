@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Plus, Edit2, Trash2, Check, X, AlertTriangle, Package, RefreshCw } from 'lucide-react';
+import { Plus, Edit2, Trash2, Check, X, ShieldCheck } from 'lucide-react';
 
 export default function AdminPortal({ 
   products, 
@@ -7,21 +7,19 @@ export default function AdminPortal({
   onLogin, 
   onUpdateProduct, 
   onAddProduct, 
-  onDeleteProduct,
-  onRefresh
+  onDeleteProduct 
 }) {
-  // Login Form State
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [loggingIn, setLoggingIn] = useState(false);
 
-  // Edit State
+  // Edit Product State
   const [editingId, setEditingId] = useState(null);
+  const [editName, setEditName] = useState('');
   const [editPrice, setEditPrice] = useState('');
   const [editStock, setEditStock] = useState('');
 
-  // New Product Modal State
+  // Add Product Modal State
   const [showAddModal, setShowAddModal] = useState(false);
   const [newName, setNewName] = useState('');
   const [newCategory, setNewCategory] = useState('floor-tiles');
@@ -30,68 +28,42 @@ export default function AdminPortal({
   const [newStock, setNewStock] = useState('');
   const [newDimensions, setNewDimensions] = useState('2x4 ft (600x1200 mm)');
   const [newFinish, setNewFinish] = useState('High Gloss Polished');
-  const [newMaterial, setNewMaterial] = useState('Vitrified Porcelain');
-  const [newDescription, setNewDescription] = useState('');
   const [newImage, setNewImage] = useState('images/regal-white-marble.png');
+  const [newDescription, setNewDescription] = useState('');
 
-  // Handle Login Submit (API + Static Fallback)
-  const handleLoginSubmit = async (e) => {
+  const handleLoginSubmit = (e) => {
     e.preventDefault();
-    setLoggingIn(true);
-    setLoginError('');
-
-    // Try Backend API First
-    try {
-      const res = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      if (res.ok) {
-        const contentType = res.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const data = await res.json();
-          if (data.success) {
-            onLogin(data.token);
-            setLoggingIn(false);
-            return;
-          }
-        }
-      }
-    } catch (err) {
-      // Backend not running on static host like Netlify
-    }
-
-    // Static Fallback Check
     if (username.trim() === 'admin' && password.trim() === 'admin123') {
-      const fallbackToken = 'mr_admin_token_static_' + Date.now();
-      onLogin(fallbackToken);
+      onLogin('mr_admin_token_' + Date.now());
     } else {
       setLoginError('Invalid credentials! Default: admin / admin123');
     }
-    setLoggingIn(false);
   };
 
-  // Start Inline Editing
   const startEdit = (p) => {
     setEditingId(p.id);
+    setEditName(p.name);
     setEditPrice(p.price);
     setEditStock(p.stock);
   };
 
-  // Save Inline Edit
-  const saveEdit = async (id) => {
-    await onUpdateProduct(id, {
+  const saveEdit = (id) => {
+    onUpdateProduct(id, {
+      name: editName,
       price: Number(editPrice),
       stock: Number(editStock)
     });
     setEditingId(null);
   };
 
-  // Handle Create Product
-  const handleCreateProduct = async (e) => {
+  const handleAddSubmit = (e) => {
     e.preventDefault();
-    await onAddProduct({
+    if (!newName || !newPrice || !newStock) {
+      alert('Please fill in product name, price, and stock!');
+      return;
+    }
+
+    onAddProduct({
       name: newName,
       category: newCategory,
       price: Number(newPrice),
@@ -99,134 +71,61 @@ export default function AdminPortal({
       stock: Number(newStock),
       dimensions: newDimensions,
       finish: newFinish,
-      material: newMaterial,
-      description: newDescription,
-      image: newImage
+      image: newImage || 'images/regal-white-marble.png',
+      description: newDescription || 'Premium high quality product from M R Tiles & Sanitation.',
+      colors: [
+        { name: "Standard White", hex: "#ffffff" },
+        { name: "Grey Finish", hex: "#cbd5e1" }
+      ]
     });
 
     setShowAddModal(false);
-    // Reset Form
     setNewName('');
     setNewPrice('');
     setNewStock('');
     setNewDescription('');
   };
 
-  // If Not Authenticated, Render Login Screen
   if (!adminToken) {
     return (
-      <div style={{ maxWidth: '440px', margin: '3rem auto', padding: '0 1rem' }}>
-        <div className="glass-panel" style={{ borderRadius: 'var(--radius-lg)', padding: '2rem 1.5rem' }}>
-          <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-            <div style={{ width: '52px', height: '52px', background: 'linear-gradient(135deg, var(--accent-gold), var(--accent-amber))', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', margin: '0 auto 0.85rem', boxShadow: 'var(--shadow-gold)' }}>
-              <ShieldCheck size={28} />
-            </div>
-            <h2 style={{ fontSize: '1.5rem', color: '#fff', marginBottom: '0.2rem' }}>Admin Portal Login</h2>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>M R Tiles & Sanitation Manager Portal</p>
+      <div style={{ maxWidth: '400px', margin: '3rem auto', padding: '1.5rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+        <h2 style={{ fontSize: '1.3rem', color: '#0f172a', marginBottom: '0.5rem', textAlign: 'center' }}>Admin Portal Login</h2>
+        
+        {loginError && (
+          <div style={{ background: '#fee2e2', color: '#dc2626', padding: '0.5rem', borderRadius: '4px', fontSize: '0.8rem', marginBottom: '1rem', textAlign: 'center' }}>
+            {loginError}
           </div>
+        )}
 
-          {loginError && (
-            <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239,68,68,0.4)', color: '#f87171', padding: '0.65rem 0.85rem', borderRadius: '8px', fontSize: '0.82rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <AlertTriangle size={16} /> {loginError}
-            </div>
-          )}
-
-          <form onSubmit={handleLoginSubmit}>
-            <div style={{ marginBottom: '1.1rem' }}>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Username</label>
-              <input 
-                type="text"
-                required
-                placeholder="admin"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.65rem 0.8rem', color: '#fff', fontSize: '0.9rem' }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Password</label>
-              <input 
-                type="password"
-                required
-                placeholder="••••••••"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.65rem 0.8rem', color: '#fff', fontSize: '0.9rem' }}
-              />
-            </div>
-
-            <button 
-              type="submit" 
-              className="btn-primary" 
-              style={{ width: '100%', justifyContent: 'center', padding: '0.75rem' }}
-              disabled={loggingIn}
-            >
-              {loggingIn ? 'Authenticating...' : 'Sign In to Dashboard'}
-            </button>
-
-            <div style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              🔑 Default Credentials: Username: <code style={{ color: 'var(--accent-gold-bright)' }}>admin</code> | Password: <code style={{ color: 'var(--accent-gold-bright)' }}>admin123</code>
-            </div>
-          </form>
-        </div>
+        <form onSubmit={handleLoginSubmit}>
+          <div style={{ marginBottom: '0.85rem' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', color: '#64748b', marginBottom: '0.2rem' }}>Username</label>
+            <input type="text" required placeholder="admin" value={username} onChange={e => setUsername(e.target.value)} style={{ width: '100%', padding: '0.55rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }} />
+          </div>
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', color: '#64748b', marginBottom: '0.2rem' }}>Password</label>
+            <input type="password" required placeholder="admin123" value={password} onChange={e => setPassword(e.target.value)} style={{ width: '100%', padding: '0.55rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }} />
+          </div>
+          <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>Sign In to Dashboard</button>
+        </form>
       </div>
     );
   }
 
-  // Calculate Dashboard Stats
-  const totalItems = products.length;
-  const lowStockCount = products.filter(p => p.stock > 0 && p.stock <= (p.minStock || 10)).length;
-  const outOfStockCount = products.filter(p => p.stock <= 0).length;
-
   return (
     <div className="admin-container">
-      {/* Header Bar */}
       <div className="admin-header">
         <div>
-          <h1 style={{ fontSize: '1.8rem', color: '#fff' }}>Stock & Price Control Center</h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Real-time inventory sync for M R Tiles & Sanitation catalog</p>
+          <h1 style={{ fontSize: '1.6rem', color: '#0f172a' }}>Stock & Price Control Center</h1>
+          <p style={{ fontSize: '0.85rem', color: '#64748b' }}>Manage product names, inventory stock, trade pricing, and new stock introductions</p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem', width: '100%', maxWidth: '380px' }}>
-          <button className="btn-secondary" onClick={onRefresh} style={{ padding: '0.6rem 0.85rem', fontSize: '0.85rem', flex: 1, justifyContent: 'center' }}>
-            <RefreshCw size={14} /> Sync Catalog
-          </button>
-          <button className="btn-primary" onClick={() => setShowAddModal(true)} style={{ padding: '0.6rem 0.85rem', fontSize: '0.85rem', flex: 1.2, justifyContent: 'center' }}>
-            <Plus size={16} /> Add Tile / Item
-          </button>
-        </div>
+        <button className="btn-primary" onClick={() => setShowAddModal(true)}>
+          <Plus size={16} /> Add New Tile / Stock
+        </button>
       </div>
 
-      {/* Stats Summary Cards */}
-      <div className="admin-stats-grid">
-        <div className="stat-card glass-panel">
-          <div className="stat-icon total"><Package /></div>
-          <div>
-            <div className="stat-val">{totalItems}</div>
-            <div className="stat-lbl">Active Products</div>
-          </div>
-        </div>
-
-        <div className="stat-card glass-panel">
-          <div className="stat-icon low"><AlertTriangle /></div>
-          <div>
-            <div className="stat-val" style={{ color: '#fbbf24' }}>{lowStockCount}</div>
-            <div className="stat-lbl">Low Stock Warning</div>
-          </div>
-        </div>
-
-        <div className="stat-card glass-panel">
-          <div className="stat-icon out"><X /></div>
-          <div>
-            <div className="stat-val" style={{ color: '#f87171' }}>{outOfStockCount}</div>
-            <div className="stat-lbl">Out of Stock Items</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Inventory & Pricing Table */}
-      <div className="admin-table-wrap glass-panel">
+      <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>
             <tr>
@@ -234,91 +133,68 @@ export default function AdminPortal({
               <th>Category</th>
               <th>Price (₹)</th>
               <th>Stock Level</th>
-              <th>Stock Status</th>
               <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {products.map(p => {
               const isEditing = editingId === p.id;
-              const isLowStock = p.stock > 0 && p.stock <= (p.minStock || 10);
-              const isOutOfStock = p.stock <= 0;
-              const statusLabel = isOutOfStock ? 'Out of Stock' : (isLowStock ? 'Low Stock' : 'In Stock');
-              const statusClass = isOutOfStock ? 'out-of-stock' : (isLowStock ? 'low-stock' : 'in-stock');
-
               return (
                 <tr key={p.id}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <img src={p.image} alt={p.name} className="table-img" onError={(e) => { e.target.src = 'images/regal-white-marble.png'; }} />
+                      <img src={p.image} alt={p.name} className="table-img" onError={e => e.target.src = 'images/regal-white-marble.png'} />
                       <div>
-                        <div style={{ fontWeight: '700', color: '#fff' }}>{p.name}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.dimensions}</div>
+                        {isEditing ? (
+                          <input 
+                            type="text"
+                            value={editName}
+                            onChange={e => setEditName(e.target.value)}
+                            style={{ padding: '0.25rem', border: '1px solid #2563eb', borderRadius: '4px', color: '#0f172a', fontWeight: 'bold' }}
+                          />
+                        ) : (
+                          <div style={{ fontWeight: 'bold', color: '#0f172a' }}>{p.name}</div>
+                        )}
+                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{p.dimensions}</div>
                       </div>
                     </div>
                   </td>
 
-                  <td>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{p.categoryLabel || p.category}</span>
-                  </td>
+                  <td>{p.categoryLabel || p.category}</td>
 
                   <td>
                     {isEditing ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                        <span style={{ color: 'var(--accent-gold-bright)', fontWeight: '700' }}>₹</span>
-                        <input 
-                          type="number"
-                          value={editPrice}
-                          onChange={e => setEditPrice(e.target.value)}
-                          style={{ width: '75px', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--accent-gold)', borderRadius: '4px', padding: '0.25rem', color: '#fff', fontWeight: '700' }}
-                        />
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>/{p.unit}</span>
-                      </div>
+                      <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} style={{ width: '75px', padding: '0.25rem', border: '1px solid #2563eb', borderRadius: '4px' }} />
                     ) : (
-                      <span style={{ fontWeight: '700', color: 'var(--accent-gold-bright)' }}>
-                        ₹{p.price.toLocaleString('en-IN')} <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 'normal' }}>/{p.unit}</span>
-                      </span>
+                      `₹${p.price.toLocaleString('en-IN')}/${p.unit}`
                     )}
                   </td>
 
                   <td>
                     {isEditing ? (
-                      <input 
-                        type="number"
-                        value={editStock}
-                        onChange={e => setEditStock(e.target.value)}
-                        style={{ width: '75px', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--accent-gold)', borderRadius: '4px', padding: '0.25rem', color: '#fff', fontWeight: '700' }}
-                      />
+                      <input type="number" value={editStock} onChange={e => setEditStock(e.target.value)} style={{ width: '75px', padding: '0.25rem', border: '1px solid #2563eb', borderRadius: '4px' }} />
                     ) : (
-                      <span style={{ fontWeight: '600', color: '#fff' }}>
-                        {p.stock} {p.unit}
-                      </span>
+                      `${p.stock} ${p.unit}`
                     )}
-                  </td>
-
-                  <td>
-                    <span className={`stock-badge ${statusClass}`} style={{ position: 'static' }}>
-                      {statusLabel}
-                    </span>
                   </td>
 
                   <td>
                     <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
                       {isEditing ? (
                         <>
-                          <button className="btn-icon" style={{ background: '#10b981', color: '#fff' }} onClick={() => saveEdit(p.id)} title="Save changes">
+                          <button className="btn-icon" style={{ background: '#16a34a', color: '#fff' }} onClick={() => saveEdit(p.id)} title="Save Changes">
                             <Check size={16} />
                           </button>
-                          <button className="btn-icon" onClick={() => setEditingId(null)} title="Cancel edit">
+                          <button className="btn-icon" onClick={() => setEditingId(null)} title="Cancel">
                             <X size={16} />
                           </button>
                         </>
                       ) : (
                         <>
-                          <button className="btn-icon" onClick={() => startEdit(p)} title="Edit price & stock">
+                          <button className="btn-icon" onClick={() => startEdit(p)} title="Edit Name, Price & Stock">
                             <Edit2 size={16} />
                           </button>
-                          <button className="btn-icon delete" onClick={() => onDeleteProduct(p.id)} title="Delete item">
+                          <button className="btn-icon delete" onClick={() => onDeleteProduct(p.id)} title="Delete Stock">
                             <Trash2 size={16} />
                           </button>
                         </>
@@ -332,30 +208,30 @@ export default function AdminPortal({
         </table>
       </div>
 
-      {/* Add New Product Modal */}
+      {/* Add New Product / Stock Modal */}
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-content glass-panel" onClick={e => e.stopPropagation()} style={{ maxWidth: '560px' }}>
-            <button className="modal-close" onClick={() => setShowAddModal(false)}><X size={18} /></button>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px' }}>
+            <button className="modal-close" onClick={() => setShowAddModal(false)}>✕</button>
 
-            <h3 style={{ fontSize: '1.3rem', color: '#fff', marginBottom: '1rem' }}>Add New Product / Tile to Store</h3>
+            <h3 style={{ fontSize: '1.25rem', color: '#0f172a', marginBottom: '1rem' }}>Introduce New Product / Stock</h3>
 
-            <form onSubmit={handleCreateProduct}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '0.85rem' }}>
+            <form onSubmit={handleAddSubmit}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Product Name *</label>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Product Name *</label>
                   <input 
                     type="text"
                     required
-                    placeholder="e.g. Italian Calacatta Marble"
+                    placeholder="e.g. Italian Onyx Vitrified"
                     value={newName}
                     onChange={e => setNewName(e.target.value)}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
+                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Category *</label>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Category *</label>
                   <select 
                     value={newCategory}
                     onChange={e => {
@@ -363,7 +239,7 @@ export default function AdminPortal({
                       if (e.target.value.includes('tiles') || e.target.value.includes('kitchen')) setNewUnit('sq.ft');
                       else setNewUnit('piece');
                     }}
-                    style={{ width: '100%', background: '#111827', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
+                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
                   >
                     <option value="floor-tiles">Floor Tiles</option>
                     <option value="wall-tiles">Wall Tiles</option>
@@ -373,25 +249,25 @@ export default function AdminPortal({
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.85rem', marginBottom: '0.85rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Price (₹) *</label>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Price (₹) *</label>
                   <input 
                     type="number"
                     required
                     placeholder="65"
                     value={newPrice}
                     onChange={e => setNewPrice(e.target.value)}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
+                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Unit *</label>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Unit *</label>
                   <select 
                     value={newUnit}
                     onChange={e => setNewUnit(e.target.value)}
-                    style={{ width: '100%', background: '#111827', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
+                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
                   >
                     <option value="sq.ft">per sq.ft</option>
                     <option value="piece">per piece</option>
@@ -400,50 +276,61 @@ export default function AdminPortal({
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Stock *</label>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Initial Stock *</label>
                   <input 
                     type="number"
                     required
                     placeholder="1000"
                     value={newStock}
                     onChange={e => setNewStock(e.target.value)}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
+                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '0.85rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Dimensions</label>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Dimensions</label>
                   <input 
                     type="text"
                     placeholder="2x4 ft (600x1200 mm)"
                     value={newDimensions}
                     onChange={e => setNewDimensions(e.target.value)}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
+                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Finish & Polish</label>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Finish & Polish</label>
                   <input 
                     type="text"
                     placeholder="High Gloss Polished"
                     value={newFinish}
                     onChange={e => setNewFinish(e.target.value)}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
+                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
                   />
                 </div>
               </div>
 
-              <div style={{ marginBottom: '1.25rem' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Description</label>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Photo / Image URL</label>
+                <input 
+                  type="text"
+                  placeholder="images/regal-white-marble.png"
+                  value={newImage}
+                  onChange={e => setNewImage(e.target.value)}
+                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Description</label>
                 <textarea 
                   rows="2"
-                  placeholder="Premium vitrified porcelain floor tile with anti-stain glaze..."
+                  placeholder="High quality vitrified floor tile with anti-stain glaze..."
                   value={newDescription}
                   onChange={e => setNewDescription(e.target.value)}
-                  style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.88rem' }}
+                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', fontFamily: 'inherit', color: '#0f172a' }}
                 />
               </div>
 
