@@ -8,14 +8,20 @@ import AiAssistant from './components/AiAssistant.jsx';
 import { DEFAULT_PRODUCTS } from './data/defaultProducts.js';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState('store'); // 'store' | 'admin'
+  const [currentView, setCurrentView] = useState('store');
   const [allProducts, setAllProducts] = useState(DEFAULT_PRODUCTS);
   const [filteredProducts, setFilteredProducts] = useState(DEFAULT_PRODUCTS);
   const [activeCategory, setActiveCategory] = useState('all');
   const [search, setSearch] = useState('');
 
-  // Admin Token State
-  const [adminToken, setAdminToken] = useState(() => localStorage.getItem('mr_admin_token') || '');
+  // Safe Admin Token State with try/catch
+  const [adminToken, setAdminToken] = useState(() => {
+    try {
+      return localStorage.getItem('mr_admin_token') || '';
+    } catch (e) {
+      return '';
+    }
+  });
 
   // Modal States
   const [calcProduct, setCalcProduct] = useState(null);
@@ -30,16 +36,20 @@ export default function App() {
     try {
       const res = await fetch('/api/products');
       if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.products && data.products.length > 0) {
-          setAllProducts(data.products);
-          return;
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.products) && data.products.length > 0) {
+            setAllProducts(data.products);
+            return;
+          }
         }
       }
     } catch (err) {
-      console.warn('API endpoint not available, using offline catalog fallback.');
+      // Endpoint not available on static cloud hosts
     }
-    // Fallback to initial local state
+    // Retain default static product catalog
+    setAllProducts(DEFAULT_PRODUCTS);
   };
 
   useEffect(() => {
@@ -48,16 +58,16 @@ export default function App() {
 
   // Filter products based on active category and search query
   useEffect(() => {
-    let result = [...allProducts];
+    let result = Array.isArray(allProducts) ? [...allProducts] : [];
 
     if (activeCategory && activeCategory !== 'all') {
       result = result.filter(p => p.category === activeCategory);
     }
 
-    if (search.trim()) {
+    if (search && search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(p => 
-        p.name.toLowerCase().includes(q) ||
+        (p.name && p.name.toLowerCase().includes(q)) ||
         (p.categoryLabel && p.categoryLabel.toLowerCase().includes(q)) ||
         (p.description && p.description.toLowerCase().includes(q)) ||
         (p.finish && p.finish.toLowerCase().includes(q))
@@ -70,20 +80,23 @@ export default function App() {
   // Admin Login Handler
   const handleAdminLogin = (token) => {
     setAdminToken(token);
-    localStorage.setItem('mr_admin_token', token);
+    try {
+      localStorage.setItem('mr_admin_token', token);
+    } catch (e) {}
     setCurrentView('admin');
   };
 
   // Admin Logout Handler
   const handleAdminLogout = () => {
     setAdminToken('');
-    localStorage.removeItem('mr_admin_token');
+    try {
+      localStorage.removeItem('mr_admin_token');
+    } catch (e) {}
     setCurrentView('store');
   };
 
   // Admin Update Product
   const handleUpdateProduct = async (id, updatePayload) => {
-    // Try Server Update
     try {
       const res = await fetch(`/api/products/${id}`, {
         method: 'PUT',
@@ -94,15 +107,18 @@ export default function App() {
         body: JSON.stringify(updatePayload)
       });
       if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          fetchProducts();
-          return;
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data.success) {
+            fetchProducts();
+            return;
+          }
         }
       }
     } catch (err) {}
 
-    // Fallback Client Update
+    // Client update fallback
     setAllProducts(prev => prev.map(p => p.id === id ? { ...p, ...updatePayload } : p));
   };
 
@@ -119,7 +135,7 @@ export default function App() {
       id: 'prod_' + Date.now(),
       ...productData,
       categoryLabel: categoryLabels[productData.category] || productData.category,
-      minStock: productData.category.includes('tiles') ? 100 : 5
+      minStock: (productData.category && productData.category.includes('tiles')) ? 100 : 5
     };
 
     try {
@@ -132,15 +148,18 @@ export default function App() {
         body: JSON.stringify(productData)
       });
       if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          fetchProducts();
-          return;
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data.success) {
+            fetchProducts();
+            return;
+          }
         }
       }
     } catch (err) {}
 
-    // Fallback Client Add
+    // Client add fallback
     setAllProducts(prev => [newProd, ...prev]);
   };
 
@@ -155,15 +174,18 @@ export default function App() {
         }
       });
       if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          fetchProducts();
-          return;
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data.success) {
+            fetchProducts();
+            return;
+          }
         }
       }
     } catch (err) {}
 
-    // Fallback Client Delete
+    // Client delete fallback
     setAllProducts(prev => prev.filter(p => p.id !== id));
   };
 
