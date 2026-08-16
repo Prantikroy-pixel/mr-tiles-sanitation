@@ -12,7 +12,12 @@ export const DEFAULT_PRODUCTS = [
     "finish": "High Gloss Polished",
     "material": "Vitrified Porcelain",
     "image": "images/regal-white-marble.png",
-    "description": "Luxurious white marble finish vitrified tiles with elegant gold and subtle grey veining. Stain resistant and ultra durable."
+    "description": "Luxurious white marble finish vitrified tiles with elegant gold and subtle grey veining.",
+    "colors": [
+      { "name": "Carrara White", "hex": "#ffffff" },
+      { "name": "Calacatta Gold", "hex": "#fef3c7" },
+      { "name": "Statuario Grey", "hex": "#cbd5e1" }
+    ]
   },
   {
     "id": "prod_2",
@@ -27,7 +32,12 @@ export const DEFAULT_PRODUCTS = [
     "finish": "Satin Matt Anti-Skid",
     "material": "Glazed Vitrified",
     "image": "images/moroccan-grey.png",
-    "description": "Contemporary grey porcelain floor tile with subtle tactile pattern. Perfect for living rooms, kitchens, and commercial floors."
+    "description": "Contemporary grey porcelain floor tile with subtle tactile pattern. Anti-skid and durable.",
+    "colors": [
+      { "name": "Slate Grey", "hex": "#64748b" },
+      { "name": "Charcoal Black", "hex": "#1e293b" },
+      { "name": "Beige Matt", "hex": "#e2e8f0" }
+    ]
   },
   {
     "id": "prod_3",
@@ -42,7 +52,11 @@ export const DEFAULT_PRODUCTS = [
     "finish": "Glossy Ceramic White",
     "material": "Vitreous China Ceramic",
     "image": "images/wall-hung-basin.png",
-    "description": "Minimalist wall-mounted wash basin with integrated tap hole and overflow ring. Easy to clean and space saving."
+    "description": "Minimalist wall-mounted wash basin with integrated tap hole and overflow ring.",
+    "colors": [
+      { "name": "Pure White", "hex": "#ffffff" },
+      { "name": "Matte Black", "hex": "#0f172a" }
+    ]
   },
   {
     "id": "prod_4",
@@ -57,7 +71,11 @@ export const DEFAULT_PRODUCTS = [
     "finish": "Antibacterial Glaze",
     "material": "Dual Flush Ceramic",
     "image": "images/smart-commode.png",
-    "description": "Premium dual-flush rimless smart commode with soft-close seat lid, powerful tornado flushing system, and eco water saving mode."
+    "description": "Premium dual-flush rimless smart commode with soft-close seat lid.",
+    "colors": [
+      { "name": "Gloss White", "hex": "#ffffff" },
+      { "name": "Pearl Ivory", "hex": "#fef3c7" }
+    ]
   },
   {
     "id": "prod_5",
@@ -72,7 +90,12 @@ export const DEFAULT_PRODUCTS = [
     "finish": "High Gloss Mirror Finish",
     "material": "Ceramic Wall Tile",
     "image": "images/regal-white-marble.png",
-    "description": "Rich onyx crystal pattern wall tile designed for luxury bathroom accent walls and living room television backdrops."
+    "description": "Rich onyx crystal pattern wall tile designed for luxury bathroom accent walls.",
+    "colors": [
+      { "name": "Crystal Gold", "hex": "#fde047" },
+      { "name": "Emerald Onyx", "hex": "#a7f3d0" },
+      { "name": "Ocean Blue", "hex": "#bae6fd" }
+    ]
   },
   {
     "id": "prod_6",
@@ -87,7 +110,12 @@ export const DEFAULT_PRODUCTS = [
     "finish": "Electroplated Matte Black",
     "material": "Solid Brass Core",
     "image": "images/wall-hung-basin.png",
-    "description": "Thermostatic rain shower diverter mixer tap with sleek black PVD coating for corrosion protection."
+    "description": "Thermostatic rain shower diverter mixer tap with sleek PVD coating.",
+    "colors": [
+      { "name": "Matte Black", "hex": "#0f172a" },
+      { "name": "Chrome Silver", "hex": "#cbd5e1" },
+      { "name": "Rose Gold", "hex": "#fde68a" }
+    ]
   },
   {
     "id": "prod_7",
@@ -102,6 +130,11 @@ export const DEFAULT_PRODUCTS = [
     "finish": "Polished Quartz",
     "material": "Engineered Quartz",
     "image": "images/moroccan-grey.png",
-    "description": "Heat resistant, non-porous engineered quartz kitchen countertop slab with anti-bacterial technology."
+    "description": "Heat resistant, non-porous engineered quartz kitchen countertop slab.",
+    "colors": [
+      { "name": "Sparkle White", "hex": "#ffffff" },
+      { "name": "Granite Grey", "hex": "#64748b" },
+      { "name": "Nero Black", "hex": "#1e293b" }
+    ]
   }
 ];

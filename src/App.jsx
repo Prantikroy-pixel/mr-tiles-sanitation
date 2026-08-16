@@ -11,7 +11,6 @@ export default function App() {
   const [allProducts, setAllProducts] = useState(DEFAULT_PRODUCTS);
   const [filteredProducts, setFilteredProducts] = useState(DEFAULT_PRODUCTS);
   const [activeCategory, setActiveCategory] = useState('all');
-  const [search, setSearch] = useState('');
 
   // Safe Admin Token State
   const [adminToken, setAdminToken] = useState(() => {
@@ -51,7 +50,7 @@ export default function App() {
     fetchProducts();
   }, []);
 
-  // Filter products based on active category and search query
+  // Filter products based on active category
   useEffect(() => {
     let result = Array.isArray(allProducts) ? [...allProducts] : [];
 
@@ -59,18 +58,70 @@ export default function App() {
       result = result.filter(p => p.category === activeCategory);
     }
 
-    if (search && search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(p => 
-        (p.name && p.name.toLowerCase().includes(q)) ||
-        (p.categoryLabel && p.categoryLabel.toLowerCase().includes(q)) ||
-        (p.description && p.description.toLowerCase().includes(q)) ||
-        (p.finish && p.finish.toLowerCase().includes(q))
-      );
+    setFilteredProducts(result);
+  }, [allProducts, activeCategory]);
+
+  // Download PDF Catalog Generator
+  const handleDownloadPdf = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Please allow popups to download the PDF catalog!');
+      return;
     }
 
-    setFilteredProducts(result);
-  }, [allProducts, activeCategory, search]);
+    const rows = allProducts.map(p => `
+      <tr style="border-bottom: 1px solid #e2e8f0;">
+        <td style="padding: 10px; font-weight: bold;">${p.name}</td>
+        <td style="padding: 10px;">${p.categoryLabel || p.category}</td>
+        <td style="padding: 10px;">${p.dimensions}</td>
+        <td style="padding: 10px;">${p.colors ? p.colors.map(c => c.name).join(', ') : 'Standard'}</td>
+        <td style="padding: 10px; font-weight: bold; color: #0f172a;">₹${p.price}/${p.unit}</td>
+      </tr>
+    `).join('');
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>M R Tiles & Sanitation - Product Catalog PDF</title>
+          <style>
+            body { font-family: -apple-system, sans-serif; padding: 20px; color: #1e293b; }
+            h1 { font-size: 22px; color: #0f172a; margin-bottom: 4px; }
+            p { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+            th { background: #f8fafc; padding: 10px; border-bottom: 2px solid #cbd5e1; text-transform: uppercase; font-size: 11px; }
+            .footer { margin-top: 30px; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+          </style>
+        </head>
+        <body>
+          <h1>M R TILES AND SANITATION</h1>
+          <p>Trinayani Ln, near Karan TVS Showroom, Kanakpur, Silchar, Assam - 788006 • Phone/WhatsApp: +91 60013 99842</p>
+          <h3>Official Product & Price Catalog</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Product Item</th>
+                <th>Category</th>
+                <th>Dimensions</th>
+                <th>Color Choices</th>
+                <th>Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+          <div class="footer">
+            © ${new Date().getFullYear()} M R TILES AND SANITATION. All prices are trade prices per unit. Contact showroom for bulk discount quotes.
+          </div>
+          <script>
+            window.onload = function() { window.print(); };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
 
   // Admin Login Handler
   const handleAdminLogin = (token) => {
@@ -205,10 +256,9 @@ export default function App() {
           products={filteredProducts}
           activeCategory={activeCategory}
           setActiveCategory={setActiveCategory}
-          search={search}
-          setSearch={setSearch}
           onOpenCalc={openCalculator}
           onInquire={openInquiry}
+          onDownloadPdf={handleDownloadPdf}
         />
       ) : (
         <AdminPortal 

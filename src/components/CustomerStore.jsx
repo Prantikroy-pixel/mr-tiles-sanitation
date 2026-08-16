@@ -1,7 +1,9 @@
-import React from 'react';
-import { Sparkles, Calculator, Search, MapPin, Phone, Clock, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calculator, MapPin, Phone, Clock, Download } from 'lucide-react';
 
-export default function CustomerStore({ products, activeCategory, setActiveCategory, search, setSearch, onOpenCalc, onInquire }) {
+export default function CustomerStore({ products, activeCategory, setActiveCategory, onOpenCalc, onInquire, onDownloadPdf }) {
+  const [selectedColors, setSelectedColors] = useState({});
+
   const categories = [
     { id: 'all', label: 'All Products' },
     { id: 'floor-tiles', label: 'Floor Tiles' },
@@ -10,31 +12,35 @@ export default function CustomerStore({ products, activeCategory, setActiveCateg
     { id: 'kitchen-solutions', label: 'Kitchen Solutions' }
   ];
 
+  const handleColorSelect = (productId, colorName) => {
+    setSelectedColors(prev => ({ ...prev, [productId]: colorName }));
+  };
+
   return (
     <main>
       {/* Hero Header */}
       <section className="hero-section">
         <div className="hero-badge">
-          <Sparkles size={14} /> M R TILES AND SANITATION • SILCHAR
+          M R TILES AND SANITATION • SILCHAR
         </div>
         <h1 className="hero-heading">
           Premium Tiles & <span>Sanitary Solutions</span>
         </h1>
         <p className="hero-desc">
-          Quality • Design • Durability. Discover high-gloss marble vitrified floor tiles, ceramic wall designs, and smart rimless sanitaryware for home and commercial spaces.
+          Quality • Design • Durability. Discover high-gloss vitrified floor tiles, ceramic wall designs, and smart sanitaryware for home and commercial spaces.
         </p>
 
         <div className="hero-actions">
           <button className="btn-primary" onClick={() => onOpenCalc(null)}>
-            <Calculator size={16} /> Room & Tile Cost Calculator
+            <Calculator size={16} /> Tile & Budget Calculator
           </button>
-          <a href="#catalog" className="btn-secondary">
-            Browse Store Catalog <ArrowRight size={16} />
-          </a>
+          <button className="btn-secondary" onClick={onDownloadPdf}>
+            <Download size={16} /> Download Catalog (PDF)
+          </button>
         </div>
       </section>
 
-      {/* Category Filter & Search Bar */}
+      {/* Category Filter Bar */}
       <div id="catalog" className="filter-container">
         <div className="category-tabs">
           {categories.map(cat => (
@@ -47,17 +53,6 @@ export default function CustomerStore({ products, activeCategory, setActiveCateg
             </button>
           ))}
         </div>
-
-        <div className="search-box">
-          <Search size={16} className="search-icon" />
-          <input 
-            type="text"
-            className="search-input"
-            placeholder="Search marble, basin, commode..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
       </div>
 
       {/* Catalog Grid */}
@@ -65,8 +60,8 @@ export default function CustomerStore({ products, activeCategory, setActiveCateg
         {products.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3.5rem 1rem', color: 'var(--text-muted)' }}>
             <p style={{ fontSize: '1.1rem' }}>No products found matching your filter.</p>
-            <button className="btn-secondary" style={{ marginTop: '1rem' }} onClick={() => { setActiveCategory('all'); setSearch(''); }}>
-              Reset Filters
+            <button className="btn-secondary" style={{ marginTop: '1rem' }} onClick={() => setActiveCategory('all')}>
+              Reset Category Filter
             </button>
           </div>
         ) : (
@@ -76,6 +71,7 @@ export default function CustomerStore({ products, activeCategory, setActiveCateg
               const isOutOfStock = prod.stock <= 0;
               const stockStatusClass = isOutOfStock ? 'out-of-stock' : (isLowStock ? 'low-stock' : 'in-stock');
               const stockLabel = isOutOfStock ? 'Out of Stock' : (isLowStock ? `Low Stock (${prod.stock} left)` : `In Stock (${prod.stock} ${prod.unit})`);
+              const activeColorName = selectedColors[prod.id] || (prod.colors && prod.colors[0] ? prod.colors[0].name : '');
 
               return (
                 <div key={prod.id} className="product-card">
@@ -100,6 +96,21 @@ export default function CustomerStore({ products, activeCategory, setActiveCateg
                       {prod.dimensions} • {prod.finish}
                     </p>
 
+                    {prod.colors && prod.colors.length > 0 && (
+                      <div className="color-selector">
+                        {prod.colors.map(c => (
+                          <div 
+                            key={c.name}
+                            className={`color-chip ${activeColorName === c.name ? 'active' : ''}`}
+                            style={{ backgroundColor: c.hex }}
+                            onClick={() => handleColorSelect(prod.id, c.name)}
+                            title={c.name}
+                          />
+                        ))}
+                        <span className="color-label">{activeColorName}</span>
+                      </div>
+                    )}
+
                     <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.85rem', flex: 1 }}>
                       {prod.description}
                     </p>
@@ -120,7 +131,7 @@ export default function CustomerStore({ products, activeCategory, setActiveCateg
                       </button>
                       <button 
                         className="btn-sm-inquire"
-                        onClick={() => onInquire(prod)}
+                        onClick={() => onInquire(prod, activeColorName ? `Selected Color: ${activeColorName}` : '')}
                       >
                         Request Quote
                       </button>
@@ -134,7 +145,7 @@ export default function CustomerStore({ products, activeCategory, setActiveCateg
       </section>
 
       {/* Showroom & Business Details */}
-      <section style={{ maxWidth: '1280px', margin: '3rem auto', padding: '0 1.5rem' }}>
+      <section style={{ maxWidth: '1200px', margin: '3rem auto', padding: '0 1.5rem' }}>
         <div style={{ background: '#ffffff', borderRadius: 'var(--radius-lg)', padding: '2rem', border: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-dark)', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.4rem' }}>
@@ -164,7 +175,7 @@ export default function CustomerStore({ products, activeCategory, setActiveCateg
                 <span style={{ color: '#16a34a', fontWeight: 'bold' }}>✓</span> Direct factory pricing on vitrified & porcelain tiles
               </li>
               <li style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                <span style={{ color: '#16a34a', fontWeight: 'bold' }}>✓</span> Live room mockups and tile finish previewing
+                <span style={{ color: '#16a34a', fontWeight: 'bold' }}>✓</span> Live tile finish and color choice selection
               </li>
               <li style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
                 <span style={{ color: '#16a34a', fontWeight: 'bold' }}>✓</span> Safe transport & on-time delivery across Cachar & Silchar

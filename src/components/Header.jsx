@@ -1,17 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 export default function Header({ currentView, setCurrentView, adminToken, onLogout }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  const handleNavClick = (view) => {
-    setCurrentView(view);
-    setMobileOpen(false);
-  };
-
   return (
     <header className="navbar">
       <div className="nav-content">
-        <div className="brand-logo" style={{ cursor: 'pointer' }} onClick={() => handleNavClick('store')}>
+        <div className="brand-logo" style={{ cursor: 'pointer' }} onClick={() => setCurrentView('store')}>
           <div className="logo-icon">MR</div>
           <div>
             <div className="brand-title">M R TILES & SANITATION</div>
@@ -19,35 +12,19 @@ export default function Header({ currentView, setCurrentView, adminToken, onLogo
           </div>
         </div>
 
-        <button 
-          className="mobile-menu-toggle"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Toggle navigation menu"
-        >
-          {mobileOpen ? '✕' : '☰'}
-        </button>
-
-        <div className={`nav-links ${mobileOpen ? 'mobile-open' : ''}`}>
-          <button 
-            className={`nav-btn ${currentView === 'store' ? 'active' : ''}`}
-            onClick={() => handleNavClick('store')}
-          >
-            Showroom Catalog
-          </button>
-
+        <div className="nav-links">
           {adminToken ? (
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: mobileOpen ? '100%' : 'auto' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               <button 
                 className={`nav-btn ${currentView === 'admin' ? 'active' : ''}`}
-                onClick={() => handleNavClick('admin')}
-                style={{ flex: 1 }}
+                onClick={() => setCurrentView('admin')}
               >
                 Admin Dashboard
               </button>
               <button 
                 className="btn-secondary"
                 style={{ padding: '0.45rem 0.75rem', fontSize: '0.8rem' }}
-                onClick={() => { onLogout(); setMobileOpen(false); }}
+                onClick={onLogout}
               >
                 Logout
               </button>
@@ -55,7 +32,7 @@ export default function Header({ currentView, setCurrentView, adminToken, onLogo
           ) : (
             <button 
               className="admin-nav-btn"
-              onClick={() => handleNavClick('admin')}
+              onClick={() => setCurrentView('admin')}
             >
               Admin Portal
             </button>
