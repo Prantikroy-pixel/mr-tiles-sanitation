@@ -4,7 +4,6 @@ import CustomerStore from './components/CustomerStore.jsx';
 import AdminPortal from './components/AdminPortal.jsx';
 import TileCalculatorModal from './components/TileCalculatorModal.jsx';
 import InquiryModal from './components/InquiryModal.jsx';
-import AiAssistant from './components/AiAssistant.jsx';
 import { DEFAULT_PRODUCTS } from './data/defaultProducts.js';
 
 export default function App() {
@@ -14,7 +13,7 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [search, setSearch] = useState('');
 
-  // Safe Admin Token State with try/catch
+  // Safe Admin Token State
   const [adminToken, setAdminToken] = useState(() => {
     try {
       return localStorage.getItem('mr_admin_token') || '';
@@ -29,7 +28,6 @@ export default function App() {
   const [inquireProduct, setInquireProduct] = useState(null);
   const [inquireNote, setInquireNote] = useState('');
   const [showInquireModal, setShowInquireModal] = useState(false);
-  const [isAiOpen, setIsAiOpen] = useState(false);
 
   // Fetch Products with Fallback
   const fetchProducts = async () => {
@@ -45,10 +43,7 @@ export default function App() {
           }
         }
       }
-    } catch (err) {
-      // Endpoint not available on static cloud hosts
-    }
-    // Retain default static product catalog
+    } catch (err) {}
     setAllProducts(DEFAULT_PRODUCTS);
   };
 
@@ -117,8 +112,6 @@ export default function App() {
         }
       }
     } catch (err) {}
-
-    // Client update fallback
     setAllProducts(prev => prev.map(p => p.id === id ? { ...p, ...updatePayload } : p));
   };
 
@@ -158,8 +151,6 @@ export default function App() {
         }
       }
     } catch (err) {}
-
-    // Client add fallback
     setAllProducts(prev => [newProd, ...prev]);
   };
 
@@ -184,8 +175,6 @@ export default function App() {
         }
       }
     } catch (err) {}
-
-    // Client delete fallback
     setAllProducts(prev => prev.filter(p => p.id !== id));
   };
 
@@ -209,7 +198,6 @@ export default function App() {
         setCurrentView={setCurrentView}
         adminToken={adminToken}
         onLogout={handleAdminLogout}
-        onOpenAi={() => setIsAiOpen(true)}
       />
 
       {currentView === 'store' ? (
@@ -251,26 +239,17 @@ export default function App() {
         />
       )}
 
-      {/* Floating AI Assistant */}
-      <AiAssistant 
-        isOpen={isAiOpen}
-        setIsOpen={setIsAiOpen}
-        onOpenCalc={openCalculator}
-        onInquire={openInquiry}
-        allProducts={allProducts}
-      />
-
       <footer className="footer">
         <div className="footer-content">
           <div>
-            <h4 style={{ color: '#fff', fontSize: '1.1rem', marginBottom: '0.75rem' }}>M R TILES AND SANITATION</h4>
+            <h4 style={{ color: '#0f172a', fontSize: '1.1rem', marginBottom: '0.75rem' }}>M R TILES AND SANITATION</h4>
             <p style={{ fontSize: '0.85rem' }}>
               Your trusted partner for residential & commercial flooring, wall cladding, and luxury bathroom sanitaryware.
             </p>
           </div>
 
           <div>
-            <h4 style={{ color: '#fff', fontSize: '1.1rem', marginBottom: '0.75rem' }}>Showroom Address</h4>
+            <h4 style={{ color: '#0f172a', fontSize: '1.1rem', marginBottom: '0.75rem' }}>Showroom Address</h4>
             <p style={{ fontSize: '0.85rem' }}>
               Trinayani Ln, near Karan TVS Showroom,<br />
               Kanakpur, Silchar, Assam - 788006
@@ -278,7 +257,7 @@ export default function App() {
           </div>
 
           <div>
-            <h4 style={{ color: '#fff', fontSize: '1.1rem', marginBottom: '0.75rem' }}>Stock & Sales Desk</h4>
+            <h4 style={{ color: '#0f172a', fontSize: '1.1rem', marginBottom: '0.75rem' }}>Stock & Sales Desk</h4>
             <p style={{ fontSize: '0.85rem' }}>
               Phone: +91 60013 99842<br />
               Mon - Sat: 9:30 AM - 8:00 PM

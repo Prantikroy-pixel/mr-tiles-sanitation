@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Layers, ShieldCheck, Sparkles, Menu, X } from 'lucide-react';
 
-export default function Header({ currentView, setCurrentView, adminToken, onLogout, onOpenAi }) {
+export default function Header({ currentView, setCurrentView, adminToken, onLogout }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleNavClick = (view) => {
@@ -25,7 +24,7 @@ export default function Header({ currentView, setCurrentView, adminToken, onLogo
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Toggle navigation menu"
         >
-          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+          {mobileOpen ? '✕' : '☰'}
         </button>
 
         <div className={`nav-links ${mobileOpen ? 'mobile-open' : ''}`}>
@@ -33,13 +32,7 @@ export default function Header({ currentView, setCurrentView, adminToken, onLogo
             className={`nav-btn ${currentView === 'store' ? 'active' : ''}`}
             onClick={() => handleNavClick('store')}
           >
-            <Layers size={18} />
             Showroom Catalog
-          </button>
-
-          <button className="nav-btn" onClick={() => { onOpenAi(); setMobileOpen(false); }}>
-            <Sparkles size={18} style={{ color: 'var(--accent-gold-bright)' }} />
-            AI Room Advisor
           </button>
 
           {adminToken ? (
@@ -49,12 +42,11 @@ export default function Header({ currentView, setCurrentView, adminToken, onLogo
                 onClick={() => handleNavClick('admin')}
                 style={{ flex: 1 }}
               >
-                <ShieldCheck size={18} />
                 Admin Dashboard
               </button>
               <button 
                 className="btn-secondary"
-                style={{ padding: '0.5rem 0.8rem', fontSize: '0.82rem' }}
+                style={{ padding: '0.45rem 0.75rem', fontSize: '0.8rem' }}
                 onClick={() => { onLogout(); setMobileOpen(false); }}
               >
                 Logout
@@ -65,7 +57,6 @@ export default function Header({ currentView, setCurrentView, adminToken, onLogo
               className="admin-nav-btn"
               onClick={() => handleNavClick('admin')}
             >
-              <ShieldCheck size={18} />
               Admin Portal
             </button>
           )}
