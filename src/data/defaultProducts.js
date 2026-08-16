@@ -11,7 +11,7 @@ export const DEFAULT_PRODUCTS = [
     "dimensions": "2x4 ft (600x1200 mm)",
     "finish": "High Gloss Polished",
     "material": "Vitrified Porcelain",
-    "image": "/images/regal-white-marble.png",
+    "image": "images/regal-white-marble.png",
     "description": "Luxurious white marble finish vitrified tiles with elegant gold and subtle grey veining. Stain resistant and ultra durable."
   },
   {
@@ -26,7 +26,7 @@ export const DEFAULT_PRODUCTS = [
     "dimensions": "2x2 ft (600x600 mm)",
     "finish": "Satin Matt Anti-Skid",
     "material": "Glazed Vitrified",
-    "image": "/images/moroccan-grey.png",
+    "image": "images/moroccan-grey.png",
     "description": "Contemporary grey porcelain floor tile with subtle tactile pattern. Perfect for living rooms, kitchens, and commercial floors."
   },
   {
@@ -41,7 +41,7 @@ export const DEFAULT_PRODUCTS = [
     "dimensions": "450 x 350 x 130 mm",
     "finish": "Glossy Ceramic White",
     "material": "Vitreous China Ceramic",
-    "image": "/images/wall-hung-basin.png",
+    "image": "images/wall-hung-basin.png",
     "description": "Minimalist wall-mounted wash basin with integrated tap hole and overflow ring. Easy to clean and space saving."
   },
   {
@@ -56,7 +56,7 @@ export const DEFAULT_PRODUCTS = [
     "dimensions": "680 x 390 x 750 mm",
     "finish": "Antibacterial Glaze",
     "material": "Dual Flush Ceramic",
-    "image": "/images/smart-commode.png",
+    "image": "images/smart-commode.png",
     "description": "Premium dual-flush rimless smart commode with soft-close seat lid, powerful tornado flushing system, and eco water saving mode."
   },
   {
@@ -71,7 +71,7 @@ export const DEFAULT_PRODUCTS = [
     "dimensions": "1x2 ft (300x600 mm)",
     "finish": "High Gloss Mirror Finish",
     "material": "Ceramic Wall Tile",
-    "image": "/images/regal-white-marble.png",
+    "image": "images/regal-white-marble.png",
     "description": "Rich onyx crystal pattern wall tile designed for luxury bathroom accent walls and living room television backdrops."
   },
   {
@@ -86,7 +86,7 @@ export const DEFAULT_PRODUCTS = [
     "dimensions": "Standard 150mm Inlet",
     "finish": "Electroplated Matte Black",
     "material": "Solid Brass Core",
-    "image": "/images/wall-hung-basin.png",
+    "image": "images/wall-hung-basin.png",
     "description": "Thermostatic rain shower diverter mixer tap with sleek black PVD coating for corrosion protection."
   },
   {
@@ -101,7 +101,7 @@ export const DEFAULT_PRODUCTS = [
     "dimensions": "Slab Size 10x4 ft",
     "finish": "Polished Quartz",
     "material": "Engineered Quartz",
-    "image": "/images/moroccan-grey.png",
+    "image": "images/moroccan-grey.png",
     "description": "Heat resistant, non-porous engineered quartz kitchen countertop slab with anti-bacterial technology."
   }
 ];
