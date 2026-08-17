@@ -27,7 +27,7 @@ export default function CustomerStore({ products, activeCategory, setActiveCateg
           Premium Tiles & <span>Sanitary Solutions</span>
         </h1>
         <p className="hero-desc">
-          Quality • Design • Durability. Discover high-gloss vitrified floor tiles, ceramic wall designs, and smart sanitaryware for home and commercial spaces.
+          Quality • Design • Durability
         </p>
 
         <div className="hero-actions">
