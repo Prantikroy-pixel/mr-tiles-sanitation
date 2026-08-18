@@ -32,6 +32,7 @@ export default function Header({ currentView, setCurrentView, adminToken, onLogo
           ) : (
             <button 
               className="admin-nav-btn"
+              style={{ padding: '0.35rem 0.65rem', fontSize: '0.78rem', borderRadius: '5px' }}
               onClick={() => setCurrentView('admin')}
             >
               Admin Portal

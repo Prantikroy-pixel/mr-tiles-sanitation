@@ -47,7 +47,7 @@
       .brand-subtitle { font-size: 0.72rem; color: #64748b; }
       .nav-links { display: flex; align-items: center; gap: 0.5rem; }
       
-      .admin-nav-btn { background: #0f172a; color: #ffffff; padding: 0.45rem 0.9rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; }
+      .admin-nav-btn { background: #0f172a; color: #ffffff; padding: 0.35rem 0.65rem; border-radius: 5px; font-size: 0.78rem; font-weight: 600; }
       .admin-nav-btn:hover { background: #334155; }
       .nav-btn { background: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1; padding: 0.45rem 0.9rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; }
 
@@ -480,15 +480,6 @@
                         <h3 className="card-title">{prod.name}</h3>
                         <p className="card-specs">{prod.dimensions} • {prod.finish}</p>
                         
-                        {prod.colors && prod.colors.length > 0 && (
-                          <div className="color-selector">
-                            {prod.colors.map(c => (
-                              <div key={c.name} className={`color-chip ${activeColorName === c.name ? 'active' : ''}`} style={{ backgroundColor: c.hex }} onClick={() => setSelectedColors(prev => ({ ...prev, [prod.id]: c.name }))} title={c.name} />
-                            ))}
-                            <span className="color-label">{activeColorName}</span>
-                          </div>
-                        )}
-
                         <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.75rem', flex: 1 }}>{prod.description}</p>
 
                         <div className="card-price-row">

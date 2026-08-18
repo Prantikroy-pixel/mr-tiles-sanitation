@@ -97,20 +97,7 @@ export default function CustomerStore({
                       {prod.dimensions} • {prod.finish}
                     </p>
 
-                    {prod.colors && prod.colors.length > 0 && (
-                      <div className="color-selector">
-                        {prod.colors.map(c => (
-                          <div 
-                            key={c.name}
-                            className={`color-chip ${activeColorName === c.name ? 'active' : ''}`}
-                            style={{ backgroundColor: c.hex }}
-                            onClick={() => handleColorSelect(prod.id, c.name)}
-                            title={c.name}
-                          />
-                        ))}
-                        <span className="color-label">{activeColorName}</span>
-                      </div>
-                    )}
+
 
                     <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.85rem', flex: 1 }}>
                       {prod.description}
