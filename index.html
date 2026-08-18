@@ -4,12 +4,565 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>M R TILES AND SANITATION | Premium Tiles & Bathroom Solutions</title>
+    <!-- Standard Fonts & CDN Libraries -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+      :root {
+        --bg-main: #ffffff;
+        --bg-card: #ffffff;
+        --text-dark: #0f172a;
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+        --border-color: #e2e8f0;
+        --border-dark: #cbd5e1;
+        --status-in-stock-bg: #e6f4ea;
+        --status-in-stock-text: #137333;
+        --status-low-stock-bg: #fef7e0;
+        --status-low-stock-text: #b06000;
+        --status-out-stock-bg: #fce8e6;
+        --status-out-stock-text: #c5221f;
+        --font-heading: 'Outfit', -apple-system, sans-serif;
+        --font-body: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { background-color: #ffffff; color: #1e293b; font-family: var(--font-body); line-height: 1.5; overflow-x: hidden; }
+      h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); font-weight: 700; color: #0f172a; }
+      button { font-family: var(--font-heading); cursor: pointer; border: none; outline: none; transition: all 0.2s ease; }
+      a { color: inherit; text-decoration: none; }
+
+      .app-container { min-height: 100vh; display: flex; flex-direction: column; background: #ffffff; }
+      .navbar { position: sticky; top: 0; z-index: 100; background: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 0.85rem 1.5rem; }
+      .nav-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+      .brand-logo { display: flex; align-items: center; gap: 0.75rem; }
+      .logo-icon { width: 38px; height: 38px; background: #0f172a; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: 700; font-size: 1.1rem; flex-shrink: 0; }
+      .brand-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; line-height: 1.2; }
+      .brand-subtitle { font-size: 0.72rem; color: #64748b; }
+      .nav-links { display: flex; align-items: center; gap: 0.5rem; }
+      
+      .admin-nav-btn { background: #0f172a; color: #ffffff; padding: 0.45rem 0.9rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; }
+      .admin-nav-btn:hover { background: #334155; }
+
+      .hero-section { padding: 2.5rem 1.5rem 2rem; text-align: center; max-width: 1000px; margin: 0 auto; background: #ffffff; }
+      .hero-badge { display: inline-flex; align-items: center; gap: 0.4rem; background: #f8fafc; color: #334155; border: 1px solid #e2e8f0; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600; margin-bottom: 1rem; }
+      .hero-heading { font-size: 2.5rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.75rem; color: #0f172a; }
+      .hero-heading span { color: #2563eb; }
+      .hero-desc { font-size: 0.98rem; color: #64748b; max-width: 640px; margin: 0 auto 1.5rem; }
+      .hero-actions { display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap; }
+
+      .btn-primary { background: #0f172a; color: #ffffff; padding: 0.65rem 1.25rem; border-radius: 6px; font-size: 0.88rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; }
+      .btn-primary:hover { background: #334155; }
+      .btn-whatsapp { background: #16a34a; color: #ffffff; padding: 0.65rem 1.25rem; border-radius: 6px; font-size: 0.88rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; }
+      .btn-whatsapp:hover { background: #15803d; }
+      .btn-secondary { background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 0.65rem 1.25rem; border-radius: 6px; font-size: 0.88rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; }
+      .btn-secondary:hover { background: #f8fafc; }
+
+      .filter-container { max-width: 1200px; margin: 1rem auto; padding: 0 1.5rem; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 0.85rem; }
+      .category-tabs { display: flex; gap: 0.4rem; overflow-x: auto; padding-bottom: 0.4rem; max-width: 100%; justify-content: center; }
+      .tab-btn { background: #ffffff; color: #64748b; border: 1px solid #e2e8f0; padding: 0.45rem 0.9rem; border-radius: 20px; font-size: 0.82rem; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+      .tab-btn:hover { color: #0f172a; background: #f8fafc; }
+      .tab-btn.active { background: #0f172a; color: #ffffff; border-color: #0f172a; }
+
+      .catalog-section { max-width: 1200px; margin: 0 auto 3rem; padding: 0 1.5rem; background: #ffffff; }
+      .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem; }
+      .product-card { background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; display: flex; flex-direction: column; }
+      .product-card:hover { border-color: #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06); }
+      .card-image-wrap { position: relative; width: 100%; height: 200px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; overflow: hidden; }
+      .card-img { width: 100%; height: 100%; object-fit: cover; }
+      
+      .stock-badge { position: absolute; top: 0.65rem; right: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+      .stock-badge.in-stock { background: #e6f4ea; color: #137333; border: 1px solid #c6e7d0; }
+      .stock-badge.low-stock { background: #fef7e0; color: #b06000; border: 1px solid #f9e2b3; }
+      .stock-badge.out-of-stock { background: #fce8e6; color: #c5221f; border: 1px solid #f7c1c0; }
+      
+      .category-tag { position: absolute; bottom: 0.65rem; left: 0.65rem; background: #ffffff; color: #64748b; border: 1px solid #e2e8f0; padding: 0.15rem 0.45rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
+      .card-body { padding: 1rem; display: flex; flex-direction: column; flex: 1; background: #ffffff; }
+      .card-title { font-size: 1.05rem; margin-bottom: 0.2rem; color: #0f172a; }
+      .card-specs { font-size: 0.78rem; color: #64748b; margin-bottom: 0.5rem; }
+      
+      .color-selector { display: flex; gap: 0.3rem; margin-bottom: 0.75rem; align-items: center; }
+      .color-chip { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #ffffff; outline: 1px solid #cbd5e1; cursor: pointer; transition: transform 0.15s ease; }
+      .color-chip.active { outline: 2px solid #0f172a; transform: scale(1.15); }
+      .color-label { font-size: 0.72rem; color: #64748b; margin-left: 0.25rem; font-weight: 600; }
+
+      .card-price-row { display: flex; align-items: baseline; justify-content: space-between; margin-top: auto; padding-top: 0.6rem; border-top: 1px solid #e2e8f0; }
+      .price-main { font-size: 1.2rem; font-weight: 700; color: #0f172a; }
+      .price-unit { font-size: 0.75rem; color: #64748b; font-weight: 500; }
+      .card-actions { display: grid; grid-template-columns: 1fr 1.2fr; gap: 0.45rem; margin-top: 0.75rem; }
+      .btn-sm-calc { background: #f8fafc; color: #0f172a; border: 1px solid #e2e8f0; padding: 0.45rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.3rem; }
+      .btn-sm-calc:hover { background: #e2e8f0; }
+      .btn-sm-inquire { background: #0f172a; color: #ffffff; padding: 0.45rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.3rem; }
+      .btn-sm-inquire:hover { background: #334155; }
+
+      .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(2px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+      .modal-content { width: 100%; max-width: 500px; background: #ffffff; border-radius: 8px; padding: 1.5rem; position: relative; max-height: 90vh; overflow-y: auto; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+      .modal-close { position: absolute; top: 0.85rem; right: 0.85rem; background: #f8fafc; color: #64748b; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; }
+
+      .admin-container { max-width: 1200px; margin: 1.5rem auto; padding: 0 1.5rem; background: #ffffff; }
+      .admin-table-wrap { background: #ffffff; border-radius: 8px; overflow-x: auto; border: 1px solid #e2e8f0; }
+      .admin-table { width: 100%; border-collapse: collapse; text-align: left; min-width: 550px; }
+      .admin-table th { background: #f8fafc; padding: 0.75rem 0.85rem; font-size: 0.78rem; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
+      .admin-table td { padding: 0.75rem 0.85rem; border-bottom: 1px solid #e2e8f0; font-size: 0.85rem; vertical-align: middle; color: #1e293b; }
+
+      .footer { margin-top: auto; background: #ffffff; border-top: 1px solid #e2e8f0; padding: 2rem 1.5rem 1rem; color: #64748b; }
+      .footer-content { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+      .footer-bottom { text-align: center; padding-top: 1rem; border-top: 1px solid #e2e8f0; font-size: 0.78rem; }
+    </style>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      // Verified Live Cloud Database Object for Cross-Device Global Sync
+      const LIVE_CLOUD_OBJECT_ID = 'ff8081819ff5b11001a0152985c04392';
+      const LIVE_CLOUD_API_URL = `https://api.restful-api.dev/objects/${LIVE_CLOUD_OBJECT_ID}`;
+
+      // Smart Image Loader Helper
+      function ProductImage({ src, alt, className }) {
+        const [imgSrc, setImgSrc] = useState(src);
+        const [fallbackIndex, setFallbackIndex] = useState(0);
+
+        const fallbacks = [
+          src,
+          `./${src}`,
+          `images/${src.replace(/^images\//, '')}`,
+          `public/${src}`,
+          'images/regal-white-marble.png'
+        ];
+
+        const handleError = () => {
+          if (fallbackIndex < fallbacks.length - 1) {
+            const nextIdx = fallbackIndex + 1;
+            setFallbackIndex(nextIdx);
+            setImgSrc(fallbacks[nextIdx]);
+          }
+        };
+
+        return <img src={imgSrc} alt={alt} className={className} loading="lazy" onError={handleError} />;
+      }
+
+      // Initial Catalog Dataset
+      const INITIAL_PRODUCTS = [
+        {
+          id: "prod_1",
+          name: "Regal White Marble",
+          category: "floor-tiles",
+          categoryLabel: "Floor Tiles",
+          price: 70,
+          unit: "sq.ft",
+          stock: 1800,
+          minStock: 100,
+          dimensions: "2x4 ft (600x1200 mm)",
+          finish: "High Gloss Polished",
+          material: "Vitrified Porcelain",
+          image: "images/regal-white-marble.png",
+          description: "Luxurious white marble finish vitrified tiles with elegant gold and subtle grey veining.",
+          colors: [
+            { name: "Carrara White", hex: "#ffffff" },
+            { name: "Calacatta Gold", hex: "#fef3c7" },
+            { name: "Statuario Grey", hex: "#cbd5e1" }
+          ]
+        },
+        {
+          id: "prod_2",
+          name: "Moroccan Grey",
+          category: "floor-tiles",
+          categoryLabel: "Floor Tiles",
+          price: 55,
+          unit: "sq.ft",
+          stock: 850,
+          minStock: 100,
+          dimensions: "2x2 ft (600x600 mm)",
+          finish: "Satin Matt Anti-Skid",
+          material: "Glazed Vitrified",
+          image: "images/moroccan-grey.png",
+          description: "Contemporary grey porcelain floor tile with subtle tactile pattern. Anti-skid and durable.",
+          colors: [
+            { name: "Slate Grey", hex: "#64748b" },
+            { name: "Charcoal Black", hex: "#1e293b" },
+            { name: "Beige Matt", hex: "#e2e8f0" }
+          ]
+        },
+        {
+          id: "prod_3",
+          name: "Wall Hung Basin",
+          category: "sanitary",
+          categoryLabel: "Sanitary",
+          price: 4850,
+          unit: "piece",
+          stock: 24,
+          minStock: 5,
+          dimensions: "450 x 350 x 130 mm",
+          finish: "Glossy Ceramic White",
+          material: "Vitreous China Ceramic",
+          image: "images/wall-hung-basin.png",
+          description: "Minimalist wall-mounted wash basin with integrated tap hole and overflow ring.",
+          colors: [
+            { name: "Pure White", hex: "#ffffff" },
+            { name: "Matte Black", hex: "#0f172a" }
+          ]
+        },
+        {
+          id: "prod_4",
+          name: "Smart Commode",
+          category: "sanitary",
+          categoryLabel: "Sanitary",
+          price: 6950,
+          unit: "piece",
+          stock: 12,
+          minStock: 3,
+          dimensions: "680 x 390 x 750 mm",
+          finish: "Antibacterial Glaze",
+          material: "Dual Flush Ceramic",
+          image: "images/smart-commode.png",
+          description: "Premium dual-flush rimless smart commode with soft-close seat lid.",
+          colors: [
+            { name: "Gloss White", hex: "#ffffff" },
+            { name: "Pearl Ivory", hex: "#fef3c7" }
+          ]
+        },
+        {
+          id: "prod_5",
+          name: "Onyx Gold Wall Tile",
+          category: "wall-tiles",
+          categoryLabel: "Wall Tiles",
+          price: 72,
+          unit: "sq.ft",
+          stock: 600,
+          minStock: 80,
+          dimensions: "1x2 ft (300x600 mm)",
+          finish: "High Gloss Mirror Finish",
+          material: "Ceramic Wall Tile",
+          image: "images/regal-white-marble.png",
+          description: "Rich onyx crystal pattern wall tile designed for luxury bathroom accent walls.",
+          colors: [
+            { name: "Crystal Gold", hex: "#fde047" },
+            { name: "Emerald Onyx", hex: "#a7f3d0" },
+            { name: "Ocean Blue", hex: "#bae6fd" }
+          ]
+        },
+        {
+          id: "prod_6",
+          name: "Luxury Teak Finish Designer Door",
+          category: "doors",
+          categoryLabel: "Doors",
+          price: 8500,
+          unit: "piece",
+          stock: 15,
+          minStock: 3,
+          dimensions: "7x3 ft (84x36 in)",
+          finish: "Waterproof WPC Teak Finish",
+          material: "Wood Polymer Composite",
+          image: "images/moroccan-grey.png",
+          description: "Termite proof, 100% waterproof heavy duty WPC designer entry door.",
+          colors: [
+            { name: "Burma Teak", hex: "#78350f" },
+            { name: "Walnut Dark", hex: "#451a03" },
+            { name: "Classic Oak", hex: "#92400e" }
+          ]
+        }
+      ];
+
+      // Header Component (Clean, no icons)
+      function Header({ currentView, setCurrentView, adminToken, onLogout }) {
+        return (
+          <header className="navbar">
+            <div className="nav-content">
+              <div className="brand-logo" style={{ cursor: 'pointer' }} onClick={() => setCurrentView('store')}>
+                <div className="logo-icon">MR</div>
+                <div>
+                  <div className="brand-title">M R TILES & SANITATION</div>
+                  <div className="brand-subtitle">Silchar, Assam • Premium Tiles & Sanitaryware</div>
+                </div>
+              </div>
+
+              <div className="nav-links">
+                {adminToken ? (
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <button className={`nav-btn ${currentView === 'admin' ? 'active' : ''}`} onClick={() => setCurrentView('admin')}>
+                      Admin Dashboard
+                    </button>
+                    <button className="btn-secondary" style={{ padding: '0.45rem 0.75rem', fontSize: '0.8rem' }} onClick={onLogout}>
+                      Logout
+                    </button>
+                  </div>
+                ) : (
+                  <button className="admin-nav-btn" onClick={() => setCurrentView('admin')}>
+                    Admin Portal
+                  </button>
+                )}
+              </div>
+            </div>
+          </header>
+        );
+      }
+
+      // Root App Component with Live Cross-Device Cloud Sync
+      function App() {
+        const [currentView, setCurrentView] = useState('store');
+        const [products, setProducts] = useState(INITIAL_PRODUCTS);
+        const [categories, setCategories] = useState([
+          { id: 'all', label: 'All Products' },
+          { id: 'floor-tiles', label: 'Floor Tiles' },
+          { id: 'wall-tiles', label: 'Wall Tiles' },
+          { id: 'sanitary', label: 'Sanitary' },
+          { id: 'doors', label: 'Doors' }
+        ]);
+        const [activeCategory, setActiveCategory] = useState('all');
+        const [adminToken, setAdminToken] = useState('');
+
+        const [calcProduct, setCalcProduct] = useState(null);
+        const [showCalcModal, setShowCalcModal] = useState(false);
+        const [inquireProduct, setInquireProduct] = useState(null);
+        const [inquireNote, setInquireNote] = useState('');
+        const [showInquireModal, setShowInquireModal] = useState(false);
+
+        // Fetch Live Cloud Database (Syncs across ALL devices worldwide)
+        const fetchCloudProducts = async () => {
+          try {
+            const res = await fetch(LIVE_CLOUD_API_URL);
+            if (res.ok) {
+              const result = await res.json();
+              if (result && result.data && Array.isArray(result.data.products) && result.data.products.length > 0) {
+                setProducts(result.data.products);
+                return;
+              }
+            }
+          } catch (err) {}
+        };
+
+        // Poll cloud database every 10 seconds for real-time updates on all devices
+        useEffect(() => {
+          fetchCloudProducts();
+          const timer = setInterval(fetchCloudProducts, 10000);
+          return () => clearInterval(timer);
+        }, []);
+
+        // Push Updates to Cloud DB
+        const pushToCloud = async (updatedList) => {
+          setProducts(updatedList);
+          try {
+            await fetch(LIVE_CLOUD_API_URL, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: 'mr_tiles_catalog', data: { products: updatedList } })
+            });
+          } catch (err) {}
+        };
+
+        const filtered = products.filter(p => activeCategory === 'all' || p.category === activeCategory);
+
+        return (
+          <div className="app-container">
+            <Header currentView={currentView} setCurrentView={setCurrentView} adminToken={adminToken} onLogout={() => setAdminToken('')} />
+
+            {currentView === 'store' ? (
+              <CustomerStore products={filtered} categories={categories} activeCategory={activeCategory} setActiveCategory={setActiveCategory} onOpenCalc={p => { setCalcProduct(p); setShowCalcModal(true); }} onInquire={(p, note) => { setInquireProduct(p); setInquireNote(note || ''); setShowInquireModal(true); }} onDownloadPdf={() => window.print()} />
+            ) : (
+              <AdminPortal products={products} categories={categories} adminToken={adminToken} onLogin={token => setAdminToken(token)} onUpdateProduct={(id, payload) => pushToCloud(products.map(p => p.id === id ? { ...p, ...payload } : p))} onAddProduct={p => pushToCloud([{ id: 'prod_' + Date.now(), ...p }, ...products])} onDeleteProduct={id => window.confirm('Delete stock item?') && pushToCloud(products.filter(p => p.id !== id))} onAddCategory={c => setCategories(prev => [...prev, c])} />
+            )}
+
+            <footer className="footer">
+              <div className="footer-bottom">© {new Date().getFullYear()} BLUE LEAF TECH. All rights reserved.</div>
+            </footer>
+          </div>
+        );
+      }
+
+      // Customer Store Component with Highlighted Location Pin Map
+      function CustomerStore({ products, categories, activeCategory, setActiveCategory, onOpenCalc, onInquire, onDownloadPdf }) {
+        const [selectedColors, setSelectedColors] = useState({});
+
+        return (
+          <main style={{ background: '#ffffff' }}>
+            <section className="hero-section">
+              <div className="hero-badge">M R TILES AND SANITATION • SILCHAR</div>
+              <h1 className="hero-heading">Premium Tiles & <span>Sanitary Solutions</span></h1>
+              <p className="hero-desc">Quality • Design • Durability</p>
+              
+              <div className="hero-actions">
+                <button className="btn-primary" onClick={() => onOpenCalc(null)}>Tile & Budget Calculator</button>
+                <button className="btn-secondary" onClick={onDownloadPdf}>📄 Download Catalog (PDF)</button>
+              </div>
+            </section>
+
+            <div className="filter-container">
+              <div className="category-tabs">
+                {categories.map(cat => (
+                  <button key={cat.id} className={`tab-btn ${activeCategory === cat.id ? 'active' : ''}`} onClick={() => setActiveCategory(cat.id)}>
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <section className="catalog-section">
+              <div className="product-grid">
+                {products.map(prod => {
+                  const activeColorName = selectedColors[prod.id] || (prod.colors && prod.colors[0] ? prod.colors[0].name : '');
+                  return (
+                    <div key={prod.id} className="product-card">
+                      <div className="card-image-wrap">
+                        <ProductImage src={prod.image} alt={prod.name} className="card-img" />
+                        <div className={`stock-badge ${prod.stock <= 0 ? 'out-of-stock' : (prod.stock <= 20 ? 'low-stock' : 'in-stock')}`}>
+                          {prod.stock <= 0 ? 'Out of Stock' : (prod.stock <= 20 ? `Low Stock (${prod.stock})` : `In Stock (${prod.stock})`)}
+                        </div>
+                        <div className="category-tag">{prod.categoryLabel || prod.category}</div>
+                      </div>
+
+                      <div className="card-body">
+                        <h3 className="card-title">{prod.name}</h3>
+                        <p className="card-specs">{prod.dimensions} • {prod.finish}</p>
+                        
+                        {prod.colors && prod.colors.length > 0 && (
+                          <div className="color-selector">
+                            {prod.colors.map(c => (
+                              <div key={c.name} className={`color-chip ${activeColorName === c.name ? 'active' : ''}`} style={{ backgroundColor: c.hex }} onClick={() => setSelectedColors(prev => ({ ...prev, [prod.id]: c.name }))} title={c.name} />
+                            ))}
+                            <span className="color-label">{activeColorName}</span>
+                          </div>
+                        )}
+
+                        <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.75rem', flex: 1 }}>{prod.description}</p>
+
+                        <div className="card-price-row">
+                          <div><span className="price-main">₹{prod.price.toLocaleString('en-IN')}</span> <span className="price-unit">/ {prod.unit}</span></div>
+                        </div>
+
+                        <div className="card-actions">
+                          <button className="btn-sm-calc" onClick={() => onOpenCalc(prod)}>Calculate</button>
+                          <button className="btn-sm-inquire" onClick={() => onInquire(prod, activeColorName ? `Selected Color: ${activeColorName}` : '')}>Request Quote</button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* Showroom Google Map Location Section */}
+            <section style={{ maxWidth: '1200px', margin: '3rem auto', padding: '0 1.5rem' }}>
+              <div style={{ background: '#ffffff', borderRadius: '8px', padding: '2rem', border: '1px solid #e2e8f0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '0.5rem' }}>M R Tiles & Sanitation</h2>
+                  <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1rem' }}>Trinayani Ln, near Karan TVS Showroom, Kanakpur, Silchar, Assam - 788006</p>
+                  <p style={{ fontSize: '0.88rem', color: '#0f172a', fontWeight: 'bold' }}>Call / WhatsApp: +91 60013 99842</p>
+                </div>
+                <div style={{ borderRadius: '8px', overflow: 'hidden', minHeight: '300px' }}>
+                  <iframe title="Showroom Location Map" src="https://maps.google.com/maps?q=M+R+TILES+AND+SANITATION,+Trinayani+Ln,+near+Karan+TVS+Showroom,+Kanakpur,+Silchar,+Assam+788006&t=&z=16&ie=UTF8&iwloc=&output=embed" width="100%" height="100%" style={{ border: 0, minHeight: '300px' }} loading="lazy" />
+                </div>
+              </div>
+            </section>
+          </main>
+        );
+      }
+
+      // Mobile Responsive Admin Portal (Credentials: Admin11 / Admin1234)
+      function AdminPortal({ products, categories, adminToken, onLogin, onUpdateProduct, onAddProduct, onDeleteProduct, onAddCategory }) {
+        const [username, setUsername] = useState('');
+        const [password, setPassword] = useState('');
+        const [error, setError] = useState('');
+        const [editingId, setEditingId] = useState(null);
+        const [editName, setEditName] = useState('');
+        const [editPrice, setEditPrice] = useState('');
+        const [editStock, setEditStock] = useState('');
+
+        const handleLogin = (e) => {
+          e.preventDefault();
+          if (username.trim() === 'Admin11' && password.trim() === 'Admin1234') {
+            onLogin('mr_admin_token_' + Date.now());
+          } else {
+            setError('Invalid credentials');
+          }
+        };
+
+        if (!adminToken) {
+          return (
+            <div style={{ padding: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+              <div style={{ width: '100%', maxWidth: '380px', background: '#ffffff', borderRadius: '12px', padding: '1.5rem', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}>
+                <h2 style={{ fontSize: '1.35rem', color: '#0f172a', marginBottom: '1rem', textAlign: 'center' }}>Admin Portal Login</h2>
+                {error && <div style={{ background: '#fee2e2', color: '#c5221f', padding: '0.6rem', borderRadius: '6px', fontSize: '0.85rem', marginBottom: '1rem', textAlign: 'center', fontWeight: '600' }}>{error}</div>}
+                <form onSubmit={handleLogin}>
+                  <div style={{ marginBottom: '1rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#64748b', marginBottom: '0.2rem' }}>Username</label>
+                    <input type="text" required placeholder="Enter username" value={username} onChange={e => setUsername(e.target.value)} style={{ width: '100%', padding: '0.65rem', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '1rem' }} />
+                  </div>
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#64748b', marginBottom: '0.2rem' }}>Password</label>
+                    <input type="password" required placeholder="Enter password" value={password} onChange={e => setPassword(e.target.value)} style={{ width: '100%', padding: '0.65rem', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '1rem' }} />
+                  </div>
+                  <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.75rem' }}>Sign In to Dashboard</button>
+                </form>
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div className="admin-container" style={{ padding: '1rem' }}>
+            <h1 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Stock & Price Control Center</h1>
+            <div className="admin-table-wrap" style={{ overflowX: 'auto' }}>
+              <table className="admin-table" style={{ width: '100%', minWidth: '550px' }}>
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Category</th>
+                    <th>Price (₹)</th>
+                    <th>Stock</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map(p => (
+                    <tr key={p.id}>
+                      <td>
+                        {editingId === p.id ? (
+                          <input type="text" value={editName} onChange={e => setEditName(e.target.value)} style={{ padding: '0.25rem', width: '120px' }} />
+                        ) : (
+                          <strong>{p.name}</strong>
+                        )}
+                      </td>
+                      <td>{p.categoryLabel || p.category}</td>
+                      <td>
+                        {editingId === p.id ? (
+                          <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} style={{ width: '65px', padding: '0.2rem' }} />
+                        ) : (
+                          `₹${p.price}/${p.unit}`
+                        )}
+                      </td>
+                      <td>
+                        {editingId === p.id ? (
+                          <input type="number" value={editStock} onChange={e => setEditStock(e.target.value)} style={{ width: '65px', padding: '0.2rem' }} />
+                        ) : (
+                          `${p.stock} ${p.unit}`
+                        )}
+                      </td>
+                      <td>
+                        {editingId === p.id ? (
+                          <button onClick={() => { onUpdateProduct(p.id, { name: editName, price: Number(editPrice), stock: Number(editStock) }); setEditingId(null); }}>Save</button>
+                        ) : (
+                          <button onClick={() => { setEditingId(p.id); setEditName(p.name); setEditPrice(p.price); setEditStock(p.stock); }}>Edit</button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
   </body>
 </html>
