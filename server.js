@@ -50,13 +50,13 @@ const ADMIN_TOKENS = new Set();
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body;
   
-  if (username === 'admin' && password === 'admin123') {
+  if (username === 'Admin11' && password === 'Admin1234') {
     const token = 'mr_admin_token_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     ADMIN_TOKENS.add(token);
     return res.json({
       success: true,
       token,
-      admin: { username: 'admin', role: 'Store Administrator' },
+      admin: { username: 'Admin11', role: 'Store Administrator' },
       message: 'Login successful'
     });
   }

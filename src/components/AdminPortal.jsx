@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, Check, X, ShieldCheck, AlertTriangle, Download, Upload, Image as ImageIcon } from 'lucide-react';
+import { Plus, Edit2, Trash2, Check, X, AlertTriangle, Download, Upload } from 'lucide-react';
 
 export default function AdminPortal({ 
   products, 
@@ -41,9 +41,13 @@ export default function AdminPortal({
   const handleImageFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image file size should be less than 5MB!');
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (uploadEvent) => {
-        setNewImage(uploadEvent.target.result); // Base64 data URL from local device!
+        setNewImage(uploadEvent.target.result); // Base64 data URL
       };
       reader.readAsDataURL(file);
     }
@@ -71,12 +75,16 @@ export default function AdminPortal({
     document.body.removeChild(link);
   };
 
+  // Secure Authentication Check (Username: Admin11, Password: Admin1234)
   const handleLoginSubmit = (e) => {
     e.preventDefault();
-    if (username.trim() === 'admin' && password.trim() === 'admin123') {
+    setLoginError('');
+
+    // Secure Credentials Comparison
+    if (username.trim() === 'Admin11' && password.trim() === 'Admin1234') {
       onLogin('mr_admin_token_' + Date.now());
     } else {
-      setLoginError('Invalid credentials! Default: admin / admin123');
+      setLoginError('Invalid credentials');
     }
   };
 
@@ -140,25 +148,39 @@ export default function AdminPortal({
 
   if (!adminToken) {
     return (
-      <div style={{ maxWidth: '400px', margin: '3rem auto', padding: '1.5rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-        <h2 style={{ fontSize: '1.3rem', color: '#0f172a', marginBottom: '0.5rem', textAlign: 'center' }}>Admin Portal Login</h2>
+      <div style={{ maxWidth: '400px', margin: '3.5rem auto', padding: '1.75rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+        <h2 style={{ fontSize: '1.35rem', color: '#0f172a', marginBottom: '1rem', textAlign: 'center', fontWeight: '700' }}>Admin Portal Login</h2>
         
         {loginError && (
-          <div style={{ background: '#fee2e2', color: '#dc2626', padding: '0.5rem', borderRadius: '4px', fontSize: '0.8rem', marginBottom: '1rem', textAlign: 'center' }}>
+          <div style={{ background: '#fee2e2', color: '#c5221f', border: '1px solid #f7c1c0', padding: '0.6rem 0.85rem', borderRadius: '6px', fontSize: '0.85rem', marginBottom: '1rem', textAlign: 'center', fontWeight: '600' }}>
             {loginError}
           </div>
         )}
 
         <form onSubmit={handleLoginSubmit}>
-          <div style={{ marginBottom: '0.85rem' }}>
-            <label style={{ display: 'block', fontSize: '0.8rem', color: '#64748b', marginBottom: '0.2rem' }}>Username</label>
-            <input type="text" required placeholder="admin" value={username} onChange={e => setUsername(e.target.value)} style={{ width: '100%', padding: '0.55rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }} />
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', color: '#64748b', marginBottom: '0.25rem', fontWeight: '600' }}>Username</label>
+            <input 
+              type="text" 
+              required 
+              placeholder="Enter admin username" 
+              value={username} 
+              onChange={e => setUsername(e.target.value)} 
+              style={{ width: '100%', padding: '0.6rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a', fontSize: '0.88rem' }} 
+            />
           </div>
           <div style={{ marginBottom: '1.25rem' }}>
-            <label style={{ display: 'block', fontSize: '0.8rem', color: '#64748b', marginBottom: '0.2rem' }}>Password</label>
-            <input type="password" required placeholder="admin123" value={password} onChange={e => setPassword(e.target.value)} style={{ width: '100%', padding: '0.55rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }} />
+            <label style={{ display: 'block', fontSize: '0.8rem', color: '#64748b', marginBottom: '0.25rem', fontWeight: '600' }}>Password</label>
+            <input 
+              type="password" 
+              required 
+              placeholder="Enter admin password" 
+              value={password} 
+              onChange={e => setPassword(e.target.value)} 
+              style={{ width: '100%', padding: '0.6rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a', fontSize: '0.88rem' }} 
+            />
           </div>
-          <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>Sign In to Dashboard</button>
+          <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.65rem' }}>Sign In to Dashboard</button>
         </form>
       </div>
     );
@@ -282,7 +304,7 @@ export default function AdminPortal({
         </table>
       </div>
 
-      {/* Add New Product Modal with Direct Device File Upload */}
+      {/* Add New Product Modal */}
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px' }}>
