@@ -122,9 +122,8 @@
     <script type="text/babel">
       const { useState, useEffect } = React;
 
-      // Verified Live Cloud Database Object for Cross-Device Global Sync
-      const LIVE_CLOUD_OBJECT_ID = 'ff8081819ff5b11001a0152985c04392';
-      const LIVE_CLOUD_API_URL = `https://api.restful-api.dev/objects/${LIVE_CLOUD_OBJECT_ID}`;
+      // Verified Live Render Backend API Server for Cross-Device Global Sync
+      const LIVE_CLOUD_API_URL = 'https://mr-tiles-sanitation.onrender.com/api/products';
 
       // Smart Image Loader Helper with Safe Fallback
       function ProductImage({ src, alt, className }) {
@@ -346,25 +345,17 @@
             const res = await fetch(LIVE_CLOUD_API_URL);
             if (res.ok) {
               const result = await res.json();
-              if (result && result.data && Array.isArray(result.data.products) && result.data.products.length > 0) {
-                setProducts(prev => {
-                  const cloudProds = result.data.products.map(p => ({
-                    ...p,
-                    unit: p.unit || 'sq.ft',
-                    image: p.image || 'images/regal-white-marble.png'
-                  }));
-
-                  // Keep local added items if not in cloud
-                  const cloudIds = new Set(cloudProds.map(c => c.id));
-                  const localOnly = prev.filter(p => !cloudIds.has(p.id));
-                  const merged = [...localOnly, ...cloudProds];
-                  
-                  try {
-                    localStorage.setItem('mr_tiles_local_v3', JSON.stringify(merged));
-                  } catch(e) {}
-
-                  return merged;
-                });
+              const prodList = result.products || (Array.isArray(result) ? result : null);
+              if (prodList && Array.isArray(prodList) && prodList.length > 0) {
+                const sanitized = prodList.map(p => ({
+                  ...p,
+                  unit: p.unit || 'sq.ft',
+                  image: p.image || 'images/regal-white-marble.png'
+                }));
+                setProducts(sanitized);
+                try {
+                  localStorage.setItem('mr_tiles_local_v5', JSON.stringify(sanitized));
+                } catch(e) {}
               }
             }
           } catch (err) {}
@@ -372,7 +363,7 @@
 
         useEffect(() => {
           fetchCloudProducts();
-          const timer = setInterval(fetchCloudProducts, 12000);
+          const timer = setInterval(fetchCloudProducts, 4000);
           return () => clearInterval(timer);
         }, []);
 
@@ -387,14 +378,14 @@
           setProducts(sanitized);
 
           try {
-            localStorage.setItem('mr_tiles_local_v3', JSON.stringify(sanitized));
+            localStorage.setItem('mr_tiles_local_v5', JSON.stringify(sanitized));
           } catch(e) {}
 
           try {
             await fetch(LIVE_CLOUD_API_URL, {
-              method: 'PUT',
+              method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ name: 'mr_tiles_catalog', data: { products: sanitized } })
+              body: JSON.stringify(sanitized)
             });
           } catch (err) {}
         };

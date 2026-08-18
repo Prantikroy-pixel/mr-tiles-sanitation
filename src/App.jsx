@@ -6,13 +6,16 @@ import TileCalculatorModal from './components/TileCalculatorModal.jsx';
 import InquiryModal from './components/InquiryModal.jsx';
 import { DEFAULT_PRODUCTS } from './data/defaultProducts.js';
 
+// Absolute Production Server API Endpoint for M R Tiles & Sanitation
+const LIVE_RENDER_API_URL = 'https://mr-tiles-sanitation.onrender.com/api/products';
+
 export default function App() {
   const [currentView, setCurrentView] = useState('store');
   
   // Safe Product State Loader
   const [allProducts, setAllProducts] = useState(() => {
     try {
-      const saved = localStorage.getItem('mr_tiles_cached_catalog_v4');
+      const saved = localStorage.getItem('mr_tiles_cached_catalog_v5');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -49,44 +52,45 @@ export default function App() {
   const [inquireNote, setInquireNote] = useState('');
   const [showInquireModal, setShowInquireModal] = useState(false);
 
-  // Fetch Live Products from Server API
+  // Fetch Live Products from Central Render Server Database
   const fetchLiveCloudProducts = async () => {
     try {
-      const res = await fetch('/api/products');
+      const targetUrl = window.location.hostname.includes('onrender.com') 
+        ? '/api/products' 
+        : LIVE_RENDER_API_URL;
+
+      const res = await fetch(targetUrl);
       if (res.ok) {
         const result = await res.json();
         const prodList = result.products || (Array.isArray(result) ? result : null);
+
         if (prodList && Array.isArray(prodList) && prodList.length > 0) {
-          setAllProducts(prev => {
-            const cloudProds = prodList.map(p => ({
-              ...p,
-              unit: p.unit || 'sq.ft',
-              image: p.image || 'images/regal-white-marble.png'
-            }));
+          const sanitizedList = prodList.map(p => ({
+            ...p,
+            unit: p.unit || 'sq.ft',
+            image: p.image || 'images/regal-white-marble.png'
+          }));
 
-            // Merge cloud data with locally added products
-            const cloudIds = new Set(cloudProds.map(c => c.id));
-            const newLocalProds = prev.filter(p => !cloudIds.has(p.id));
-            const merged = [...newLocalProds, ...cloudProds];
+          setAllProducts(sanitizedList);
 
-            try {
-              localStorage.setItem('mr_tiles_cached_catalog_v4', JSON.stringify(merged));
-            } catch (e) {}
-            return merged;
-          });
-          return;
+          try {
+            localStorage.setItem('mr_tiles_cached_catalog_v5', JSON.stringify(sanitizedList));
+          } catch (e) {}
         }
       }
-    } catch (err) {}
+    } catch (err) {
+      console.log('Central Server Poll Notice: Using local state while reconnecting...');
+    }
   };
 
+  // Poll central Render backend server every 4 seconds for real-time cross-device updates
   useEffect(() => {
     fetchLiveCloudProducts();
-    const timer = setInterval(fetchLiveCloudProducts, 6000);
+    const timer = setInterval(fetchLiveCloudProducts, 4000);
     return () => clearInterval(timer);
   }, []);
 
-  // Save Products to State, Local Storage & Server API
+  // Save Products to State, Local Storage & Central Render Server Database
   const saveProductsList = async (updatedList) => {
     const sanitizedList = updatedList.map(p => ({
       ...p,
@@ -97,16 +101,24 @@ export default function App() {
     setAllProducts(sanitizedList);
 
     try {
-      localStorage.setItem('mr_tiles_cached_catalog_v4', JSON.stringify(sanitizedList));
+      localStorage.setItem('mr_tiles_cached_catalog_v5', JSON.stringify(sanitizedList));
     } catch (e) {}
 
+    const targetUrl = window.location.hostname.includes('onrender.com') 
+      ? '/api/products' 
+      : LIVE_RENDER_API_URL;
+
     try {
-      await fetch('/api/products', {
+      await fetch(targetUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(sanitizedList)
       });
-    } catch (err) {}
+    } catch (err) {
+      console.error('Failed to sync changes to Render Cloud DB:', err);
+    }
   };
 
   // Filter products based on active category

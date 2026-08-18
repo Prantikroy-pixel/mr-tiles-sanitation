@@ -10,6 +10,17 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Global CORS Middleware for Cross-Domain Device Sync
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-admin-token');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -26,10 +37,13 @@ function getProducts() {
   try {
     if (fs.existsSync(DATA_FILE)) {
       const content = fs.readFileSync(DATA_FILE, 'utf-8');
-      return JSON.parse(content);
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
     }
   } catch (err) {
-    console.error('Error reading products:', err);
+    console.error('Error reading products file:', err);
   }
   return [];
 }
@@ -37,17 +51,21 @@ function getProducts() {
 // Helper to save products
 function saveProducts(products) {
   try {
+    const dir = path.dirname(DATA_FILE);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
     fs.writeFileSync(DATA_FILE, JSON.stringify(products, null, 2), 'utf-8');
     return true;
   } catch (err) {
-    console.error('Error saving products:', err);
+    console.error('Error saving products file:', err);
     return false;
   }
 }
 
 // Admin Login Route (Credentials: Admin11 / Admin1234)
 app.post('/api/admin/login', (req, res) => {
-  const { username, password } = req.body;
+  const { username, password } = req.body || {};
 
   if (username === 'Admin11' && password === 'Admin1234') {
     const token = 'mr_admin_token_' + Date.now();
@@ -85,7 +103,7 @@ app.get('/api/products', (req, res) => {
   res.json({ success: true, count: products.length, products });
 });
 
-// Public/Admin Update Product Catalog (Accepts Array or Single Product)
+// Public/Admin Update Product Catalog (Accepts Array or Single Product Object)
 app.post('/api/products', (req, res) => {
   let currentProducts = getProducts();
   
