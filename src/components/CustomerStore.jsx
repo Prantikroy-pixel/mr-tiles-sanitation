@@ -80,6 +80,7 @@ export default function CustomerStore({
                       src={prod.image} 
                       alt={prod.name} 
                       className="card-img" 
+                      loading="lazy"
                       onError={(e) => { e.target.src = 'images/regal-white-marble.png'; }} 
                     />
                     <div className={`stock-badge ${stockStatusClass}`}>
