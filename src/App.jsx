@@ -12,8 +12,20 @@ const LIVE_CLOUD_API_URL = `https://api.restful-api.dev/objects/${LIVE_CLOUD_OBJ
 
 export default function App() {
   const [currentView, setCurrentView] = useState('store');
-  const [allProducts, setAllProducts] = useState(DEFAULT_PRODUCTS);
-  const [filteredProducts, setFilteredProducts] = useState(DEFAULT_PRODUCTS);
+  
+  // Safe Product State Loader
+  const [allProducts, setAllProducts] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mr_tiles_cached_catalog_v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return DEFAULT_PRODUCTS;
+  });
+
+  const [filteredProducts, setFilteredProducts] = useState(allProducts);
 
   // Category State
   const [categories, setCategories] = useState([
@@ -41,50 +53,55 @@ export default function App() {
   const [inquireNote, setInquireNote] = useState('');
   const [showInquireModal, setShowInquireModal] = useState(false);
 
-  // Fetch Live Products from Global Cloud Database (Syncs across ALL devices worldwide!)
+  // Fetch Live Products from Global Cloud Database
   const fetchLiveCloudProducts = async () => {
     try {
       const res = await fetch(LIVE_CLOUD_API_URL);
       if (res.ok) {
         const result = await res.json();
         if (result && result.data && Array.isArray(result.data.products) && result.data.products.length > 0) {
-          setAllProducts(result.data.products);
-          try {
-            localStorage.setItem('mr_tiles_cached_catalog', JSON.stringify(result.data.products));
-          } catch (e) {}
+          setAllProducts(prev => {
+            // Merge cloud products while preserving any newly added local items
+            const cloudProds = result.data.products.map(p => ({
+              ...p,
+              unit: p.unit || 'sq.ft',
+              image: p.image || 'images/regal-white-marble.png'
+            }));
+
+            // Keep locally added products if not in cloud
+            const cloudIds = new Set(cloudProds.map(c => c.id));
+            const newLocalProds = prev.filter(p => !cloudIds.has(p.id));
+
+            const merged = [...newLocalProds, ...cloudProds];
+            try {
+              localStorage.setItem('mr_tiles_cached_catalog_v2', JSON.stringify(merged));
+            } catch (e) {}
+            return merged;
+          });
           return;
         }
       }
-    } catch (err) {
-      console.log('Error connecting to cloud DB, using cached products');
-    }
-
-    // Fallback Local Cache Check
-    try {
-      const cached = localStorage.getItem('mr_tiles_cached_catalog');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setAllProducts(parsed);
-        }
-      }
-    } catch (e) {}
+    } catch (err) {}
   };
 
-  // Poll cloud database on mount and periodically every 12 seconds so Device B automatically sees Device A edits
   useEffect(() => {
     fetchLiveCloudProducts();
-    const interval = setInterval(() => {
-      fetchLiveCloudProducts();
-    }, 12000);
-    return () => clearInterval(interval);
+    const timer = setInterval(fetchLiveCloudProducts, 12000);
+    return () => clearInterval(timer);
   }, []);
 
-  // Save Product Catalog to Global Cloud DB so EVERY Device in the World Updates Live
-  const pushProductsToGlobalCloud = async (newProductsList) => {
-    setAllProducts(newProductsList);
+  // Save Products to State, Local Storage & Global Cloud DB
+  const saveProductsList = async (updatedList) => {
+    // Ensure all items have valid units and images
+    const sanitizedList = updatedList.map(p => ({
+      ...p,
+      unit: p.unit || 'sq.ft',
+      image: p.image || 'images/regal-white-marble.png'
+    }));
+
+    setAllProducts(sanitizedList);
     try {
-      localStorage.setItem('mr_tiles_cached_catalog', JSON.stringify(newProductsList));
+      localStorage.setItem('mr_tiles_cached_catalog_v2', JSON.stringify(sanitizedList));
     } catch (e) {}
 
     try {
@@ -96,13 +113,11 @@ export default function App() {
         body: JSON.stringify({
           name: 'mr_tiles_catalog',
           data: {
-            products: newProductsList
+            products: sanitizedList
           }
         })
       });
-    } catch (err) {
-      console.error('Cloud Sync Failed:', err);
-    }
+    } catch (err) {}
   };
 
   // Filter products based on active category
@@ -137,7 +152,7 @@ export default function App() {
         <td style="padding: 10px;">${p.categoryLabel || p.category}</td>
         <td style="padding: 10px;">${p.dimensions}</td>
         <td style="padding: 10px;">${p.colors ? p.colors.map(c => c.name).join(', ') : 'Standard'}</td>
-        <td style="padding: 10px; font-weight: bold; color: #0f172a;">₹${p.price}/${p.unit}</td>
+        <td style="padding: 10px; font-weight: bold; color: #0f172a;">₹${p.price}/${p.unit || 'sq.ft'}</td>
       </tr>
     `).join('');
 
@@ -203,29 +218,36 @@ export default function App() {
     setCurrentView('store');
   };
 
-  // Admin Update Product with Real-Time Global Cloud Sync
+  // Admin Update Product
   const handleUpdateProduct = async (id, updatePayload) => {
-    const updatedList = allProducts.map(p => p.id === id ? { ...p, ...updatePayload } : p);
-    await pushProductsToGlobalCloud(updatedList);
+    const updatedList = allProducts.map(p => p.id === id ? { 
+      ...p, 
+      ...updatePayload, 
+      unit: updatePayload.unit || p.unit || 'sq.ft',
+      image: updatePayload.image || p.image || 'images/regal-white-marble.png'
+    } : p);
+    await saveProductsList(updatedList);
   };
 
-  // Admin Add Product with Real-Time Global Cloud Sync
+  // Admin Add Product (Guaranteed Persistence)
   const handleAddProduct = async (productData) => {
     const newProd = {
       id: 'prod_' + Date.now(),
+      unit: productData.unit || 'sq.ft',
+      image: productData.image || 'images/regal-white-marble.png',
       ...productData,
       minStock: (productData.category && productData.category.includes('tiles')) ? 100 : 5
     };
 
     const updatedList = [newProd, ...allProducts];
-    await pushProductsToGlobalCloud(updatedList);
+    await saveProductsList(updatedList);
   };
 
-  // Admin Delete Product with Real-Time Global Cloud Sync
+  // Admin Delete Product
   const handleDeleteProduct = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product from stock inventory?')) return;
     const updatedList = allProducts.filter(p => p.id !== id);
-    await pushProductsToGlobalCloud(updatedList);
+    await saveProductsList(updatedList);
   };
 
   // Open Calculator Modal

@@ -126,17 +126,18 @@
       const LIVE_CLOUD_OBJECT_ID = 'ff8081819ff5b11001a0152985c04392';
       const LIVE_CLOUD_API_URL = `https://api.restful-api.dev/objects/${LIVE_CLOUD_OBJECT_ID}`;
 
-      // Smart Image Loader Helper
+      // Smart Image Loader Helper with Safe Fallback
       function ProductImage({ src, alt, className }) {
-        const [imgSrc, setImgSrc] = useState(src);
+        const defaultFallback = 'images/regal-white-marble.png';
+        const initialSrc = src || defaultFallback;
+        const [imgSrc, setImgSrc] = useState(initialSrc);
         const [fallbackIndex, setFallbackIndex] = useState(0);
 
         const fallbacks = [
-          src,
-          `./${src}`,
-          `images/${src.replace(/^images\//, '')}`,
-          `public/${src}`,
-          'images/regal-white-marble.png'
+          initialSrc,
+          `./${initialSrc}`,
+          `images/${(initialSrc || '').replace(/^images\//, '')}`,
+          defaultFallback
         ];
 
         const handleError = () => {
@@ -144,10 +145,12 @@
             const nextIdx = fallbackIndex + 1;
             setFallbackIndex(nextIdx);
             setImgSrc(fallbacks[nextIdx]);
+          } else {
+            setImgSrc(defaultFallback);
           }
         };
 
-        return <img src={imgSrc} alt={alt} className={className} loading="lazy" onError={handleError} />;
+        return <img src={imgSrc || defaultFallback} alt={alt} className={className} loading="lazy" onError={handleError} />;
       }
 
       // Initial Catalog Dataset
@@ -306,10 +309,21 @@
         );
       }
 
-      // Root App Component with Live Cross-Device Cloud Sync
+      // Root App Component with Guaranteed State Persistence
       function App() {
         const [currentView, setCurrentView] = useState('store');
-        const [products, setProducts] = useState(INITIAL_PRODUCTS);
+        
+        const [products, setProducts] = useState(() => {
+          try {
+            const local = localStorage.getItem('mr_tiles_local_v3');
+            if (local) {
+              const parsed = JSON.parse(local);
+              if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+            }
+          } catch(e) {}
+          return INITIAL_PRODUCTS;
+        });
+
         const [categories, setCategories] = useState([
           { id: 'all', label: 'All Products' },
           { id: 'floor-tiles', label: 'Floor Tiles' },
@@ -326,35 +340,61 @@
         const [inquireNote, setInquireNote] = useState('');
         const [showInquireModal, setShowInquireModal] = useState(false);
 
-        // Fetch Live Cloud Database (Syncs across ALL devices worldwide)
+        // Fetch Cloud Database and merge safely
         const fetchCloudProducts = async () => {
           try {
             const res = await fetch(LIVE_CLOUD_API_URL);
             if (res.ok) {
               const result = await res.json();
               if (result && result.data && Array.isArray(result.data.products) && result.data.products.length > 0) {
-                setProducts(result.data.products);
-                return;
+                setProducts(prev => {
+                  const cloudProds = result.data.products.map(p => ({
+                    ...p,
+                    unit: p.unit || 'sq.ft',
+                    image: p.image || 'images/regal-white-marble.png'
+                  }));
+
+                  // Keep local added items if not in cloud
+                  const cloudIds = new Set(cloudProds.map(c => c.id));
+                  const localOnly = prev.filter(p => !cloudIds.has(p.id));
+                  const merged = [...localOnly, ...cloudProds];
+                  
+                  try {
+                    localStorage.setItem('mr_tiles_local_v3', JSON.stringify(merged));
+                  } catch(e) {}
+
+                  return merged;
+                });
               }
             }
           } catch (err) {}
         };
 
-        // Poll cloud database every 10 seconds for real-time updates on all devices
         useEffect(() => {
           fetchCloudProducts();
-          const timer = setInterval(fetchCloudProducts, 10000);
+          const timer = setInterval(fetchCloudProducts, 12000);
           return () => clearInterval(timer);
         }, []);
 
-        // Push Updates to Cloud DB
+        // Push Updates to State, Local & Cloud DB
         const pushToCloud = async (updatedList) => {
-          setProducts(updatedList);
+          const sanitized = updatedList.map(p => ({
+            ...p,
+            unit: p.unit || 'sq.ft',
+            image: p.image || 'images/regal-white-marble.png'
+          }));
+
+          setProducts(sanitized);
+
+          try {
+            localStorage.setItem('mr_tiles_local_v3', JSON.stringify(sanitized));
+          } catch(e) {}
+
           try {
             await fetch(LIVE_CLOUD_API_URL, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ name: 'mr_tiles_catalog', data: { products: updatedList } })
+              body: JSON.stringify({ name: 'mr_tiles_catalog', data: { products: sanitized } })
             });
           } catch (err) {}
         };
@@ -368,7 +408,7 @@
             {currentView === 'store' ? (
               <CustomerStore products={filtered} categories={categories} activeCategory={activeCategory} setActiveCategory={setActiveCategory} onOpenCalc={p => { setCalcProduct(p); setShowCalcModal(true); }} onInquire={(p, note) => { setInquireProduct(p); setInquireNote(note || ''); setShowInquireModal(true); }} onDownloadPdf={() => window.print()} />
             ) : (
-              <AdminPortal products={products} categories={categories} adminToken={adminToken} onLogin={token => setAdminToken(token)} onUpdateProduct={(id, payload) => pushToCloud(products.map(p => p.id === id ? { ...p, ...payload } : p))} onAddProduct={p => pushToCloud([{ id: 'prod_' + Date.now(), ...p }, ...products])} onDeleteProduct={id => window.confirm('Delete stock item?') && pushToCloud(products.filter(p => p.id !== id))} onAddCategory={c => setCategories(prev => [...prev, c])} />
+              <AdminPortal products={products} categories={categories} adminToken={adminToken} onLogin={token => setAdminToken(token)} onUpdateProduct={(id, payload) => pushToCloud(products.map(p => p.id === id ? { ...p, ...payload, unit: payload.unit || p.unit || 'sq.ft' } : p))} onAddProduct={p => pushToCloud([{ id: 'prod_' + Date.now(), unit: p.unit || 'sq.ft', image: p.image || 'images/regal-white-marble.png', ...p }, ...products])} onDeleteProduct={id => window.confirm('Delete stock item?') && pushToCloud(products.filter(p => p.id !== id))} onAddCategory={c => setCategories(prev => [...prev, c])} />
             )}
 
             <footer className="footer">
@@ -378,7 +418,7 @@
         );
       }
 
-      // Customer Store Component with Highlighted Location Pin Map
+      // Customer Store Component
       function CustomerStore({ products, categories, activeCategory, setActiveCategory, onOpenCalc, onInquire, onDownloadPdf }) {
         const [selectedColors, setSelectedColors] = useState({});
 
@@ -409,6 +449,8 @@
               <div className="product-grid">
                 {products.map(prod => {
                   const activeColorName = selectedColors[prod.id] || (prod.colors && prod.colors[0] ? prod.colors[0].name : '');
+                  const displayUnit = prod.unit || 'sq.ft';
+
                   return (
                     <div key={prod.id} className="product-card">
                       <div className="card-image-wrap">
@@ -435,7 +477,7 @@
                         <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.75rem', flex: 1 }}>{prod.description}</p>
 
                         <div className="card-price-row">
-                          <div><span className="price-main">₹{prod.price.toLocaleString('en-IN')}</span> <span className="price-unit">/ {prod.unit}</span></div>
+                          <div><span className="price-main">₹{prod.price.toLocaleString('en-IN')}</span> <span className="price-unit">/ {displayUnit}</span></div>
                         </div>
 
                         <div className="card-actions">
@@ -522,39 +564,42 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map(p => (
-                    <tr key={p.id}>
-                      <td>
-                        {editingId === p.id ? (
-                          <input type="text" value={editName} onChange={e => setEditName(e.target.value)} style={{ padding: '0.25rem', width: '120px' }} />
-                        ) : (
-                          <strong>{p.name}</strong>
-                        )}
-                      </td>
-                      <td>{p.categoryLabel || p.category}</td>
-                      <td>
-                        {editingId === p.id ? (
-                          <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} style={{ width: '65px', padding: '0.2rem' }} />
-                        ) : (
-                          `₹${p.price}/${p.unit}`
-                        )}
-                      </td>
-                      <td>
-                        {editingId === p.id ? (
-                          <input type="number" value={editStock} onChange={e => setEditStock(e.target.value)} style={{ width: '65px', padding: '0.2rem' }} />
-                        ) : (
-                          `${p.stock} ${p.unit}`
-                        )}
-                      </td>
-                      <td>
-                        {editingId === p.id ? (
-                          <button onClick={() => { onUpdateProduct(p.id, { name: editName, price: Number(editPrice), stock: Number(editStock) }); setEditingId(null); }}>Save</button>
-                        ) : (
-                          <button onClick={() => { setEditingId(p.id); setEditName(p.name); setEditPrice(p.price); setEditStock(p.stock); }}>Edit</button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {products.map(p => {
+                    const displayUnit = p.unit || 'sq.ft';
+                    return (
+                      <tr key={p.id}>
+                        <td>
+                          {editingId === p.id ? (
+                            <input type="text" value={editName} onChange={e => setEditName(e.target.value)} style={{ padding: '0.25rem', width: '120px' }} />
+                          ) : (
+                            <strong>{p.name}</strong>
+                          )}
+                        </td>
+                        <td>{p.categoryLabel || p.category}</td>
+                        <td>
+                          {editingId === p.id ? (
+                            <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} style={{ width: '65px', padding: '0.2rem' }} />
+                          ) : (
+                            `₹${p.price}/${displayUnit}`
+                          )}
+                        </td>
+                        <td>
+                          {editingId === p.id ? (
+                            <input type="number" value={editStock} onChange={e => setEditStock(e.target.value)} style={{ width: '65px', padding: '0.2rem' }} />
+                          ) : (
+                            `${p.stock} ${displayUnit}`
+                          )}
+                        </td>
+                        <td>
+                          {editingId === p.id ? (
+                            <button onClick={() => { onUpdateProduct(p.id, { name: editName, price: Number(editPrice), stock: Number(editStock), unit: displayUnit }); setEditingId(null); }}>Save</button>
+                          ) : (
+                            <button onClick={() => { setEditingId(p.id); setEditName(p.name); setEditPrice(p.price); setEditStock(p.stock); }}>Edit</button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

@@ -20,6 +20,7 @@ export default function AdminPortal({
   const [editName, setEditName] = useState('');
   const [editPrice, setEditPrice] = useState('');
   const [editStock, setEditStock] = useState('');
+  const [editUnit, setEditUnit] = useState('sq.ft');
 
   // Add Product Modal State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -41,10 +42,6 @@ export default function AdminPortal({
   const handleImageFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image file size should be less than 5MB!');
-        return;
-      }
       const reader = new FileReader();
       reader.onload = (uploadEvent) => {
         setNewImage(uploadEvent.target.result); // Base64 data URL
@@ -92,13 +89,15 @@ export default function AdminPortal({
     setEditName(p.name);
     setEditPrice(p.price);
     setEditStock(p.stock);
+    setEditUnit(p.unit || 'sq.ft');
   };
 
   const saveEdit = (id) => {
     onUpdateProduct(id, {
       name: editName,
       price: Number(editPrice),
-      stock: Number(editStock)
+      stock: Number(editStock),
+      unit: editUnit || 'sq.ft'
     });
     setEditingId(null);
   };
@@ -117,12 +116,12 @@ export default function AdminPortal({
       category: newCategory,
       categoryLabel: matchedCat ? matchedCat.label : newCategory,
       price: Number(newPrice),
-      unit: newUnit,
+      unit: newUnit || 'sq.ft',
       stock: Number(newStock),
-      dimensions: newDimensions,
-      finish: newFinish,
+      dimensions: newDimensions || 'Standard',
+      finish: newFinish || 'High Gloss',
       image: newImage || 'images/regal-white-marble.png',
-      description: newDescription || 'Premium high quality product from M R Tiles & Sanitation.',
+      description: newDescription || 'Premium quality product from M R Tiles & Sanitation.',
       colors: [
         { name: "Standard White", hex: "#ffffff" },
         { name: "Grey Finish", hex: "#cbd5e1" }
@@ -134,6 +133,7 @@ export default function AdminPortal({
     setNewPrice('');
     setNewStock('');
     setNewDescription('');
+    setNewImage('images/regal-white-marble.png');
   };
 
   const handleAddCategorySubmit = (e) => {
@@ -242,11 +242,14 @@ export default function AdminPortal({
           <tbody>
             {products.map(p => {
               const isEditing = editingId === p.id;
+              const displayUnit = p.unit || 'sq.ft';
+              const displayImg = p.image || 'images/regal-white-marble.png';
+
               return (
                 <tr key={p.id}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                      <img src={p.image} alt={p.name} className="table-img" onError={e => e.target.src = 'images/regal-white-marble.png'} />
+                      <img src={displayImg} alt={p.name} className="table-img" onError={e => e.target.src = 'images/regal-white-marble.png'} />
                       <div>
                         {isEditing ? (
                           <input 
@@ -269,7 +272,7 @@ export default function AdminPortal({
                     {isEditing ? (
                       <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} style={{ width: '65px', padding: '0.2rem' }} />
                     ) : (
-                      `₹${p.price.toLocaleString('en-IN')}/${p.unit}`
+                      `₹${p.price.toLocaleString('en-IN')}/${displayUnit}`
                     )}
                   </td>
 
@@ -277,7 +280,7 @@ export default function AdminPortal({
                     {isEditing ? (
                       <input type="number" value={editStock} onChange={e => setEditStock(e.target.value)} style={{ width: '65px', padding: '0.2rem' }} />
                     ) : (
-                      `${p.stock} ${p.unit}`
+                      `${p.stock} ${displayUnit}`
                     )}
                   </td>
 
