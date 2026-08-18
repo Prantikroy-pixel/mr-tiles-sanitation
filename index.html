@@ -49,12 +49,13 @@
       
       .admin-nav-btn { background: #0f172a; color: #ffffff; padding: 0.45rem 0.9rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; }
       .admin-nav-btn:hover { background: #334155; }
+      .nav-btn { background: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1; padding: 0.45rem 0.9rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; }
 
       .hero-section { padding: 2.5rem 1.5rem 2rem; text-align: center; max-width: 1000px; margin: 0 auto; background: #ffffff; }
       .hero-badge { display: inline-flex; align-items: center; gap: 0.4rem; background: #f8fafc; color: #334155; border: 1px solid #e2e8f0; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600; margin-bottom: 1rem; }
       .hero-heading { font-size: 2.5rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.75rem; color: #0f172a; }
       .hero-heading span { color: #2563eb; }
-      .hero-desc { font-size: 0.98rem; color: #64748b; max-width: 640px; margin: 0 auto 1.5rem; }
+      .hero-desc { font-size: 1.05rem; font-weight: 600; letter-spacing: 0.04em; color: #475569; max-width: 640px; margin: 0 auto 1.5rem; }
       .hero-actions { display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap; }
 
       .btn-primary { background: #0f172a; color: #ffffff; padding: 0.65rem 1.25rem; border-radius: 6px; font-size: 0.88rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; }
@@ -110,6 +111,7 @@
       .admin-table { width: 100%; border-collapse: collapse; text-align: left; min-width: 550px; }
       .admin-table th { background: #f8fafc; padding: 0.75rem 0.85rem; font-size: 0.78rem; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
       .admin-table td { padding: 0.75rem 0.85rem; border-bottom: 1px solid #e2e8f0; font-size: 0.85rem; vertical-align: middle; color: #1e293b; }
+      .table-img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; }
 
       .footer { margin-top: auto; background: #ffffff; border-top: 1px solid #e2e8f0; padding: 2rem 1.5rem 1rem; color: #64748b; }
       .footer-content { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
@@ -314,7 +316,7 @@
         
         const [products, setProducts] = useState(() => {
           try {
-            const local = localStorage.getItem('mr_tiles_local_v3');
+            const local = localStorage.getItem('mr_tiles_local_v5');
             if (local) {
               const parsed = JSON.parse(local);
               if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -521,23 +523,110 @@
         );
       }
 
-      // Mobile Responsive Admin Portal (Credentials: Admin11 / Admin1234)
+      // Mobile Responsive Admin Portal with Add Tile, Add Category, & Device Photo Uploader
       function AdminPortal({ products, categories, adminToken, onLogin, onUpdateProduct, onAddProduct, onDeleteProduct, onAddCategory }) {
         const [username, setUsername] = useState('');
         const [password, setPassword] = useState('');
-        const [error, setError] = useState('');
+        const [loginError, setLoginError] = useState('');
+
         const [editingId, setEditingId] = useState(null);
         const [editName, setEditName] = useState('');
         const [editPrice, setEditPrice] = useState('');
         const [editStock, setEditStock] = useState('');
 
-        const handleLogin = (e) => {
+        // Add Product Modal State
+        const [showAddModal, setShowAddModal] = useState(false);
+        const [newName, setNewName] = useState('');
+        const [newCategory, setNewCategory] = useState('floor-tiles');
+        const [newPrice, setNewPrice] = useState('');
+        const [newUnit, setNewUnit] = useState('sq.ft');
+        const [newStock, setNewStock] = useState('');
+        const [newDimensions, setNewDimensions] = useState('2x4 ft (600x1200 mm)');
+        const [newFinish, setNewFinish] = useState('High Gloss Polished');
+        const [newImage, setNewImage] = useState('images/regal-white-marble.png');
+        const [newDescription, setNewDescription] = useState('');
+
+        // Add Category Modal State
+        const [showAddCatModal, setShowAddCatModal] = useState(false);
+        const [newCatLabel, setNewCatLabel] = useState('');
+
+        // Handle Direct Device Image Upload
+        const handleImageFileUpload = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (uploadEvent) => {
+              setNewImage(uploadEvent.target.result); // Base64 Data URL
+            };
+            reader.readAsDataURL(file);
+          }
+        };
+
+        const exportLeadsCsv = () => {
+          const dummyLeads = [
+            { id: '1', name: 'Rahul Roy', phone: '+91 98765 43210', interest: 'Regal White Marble', note: 'Calculated 330 sq.ft (21 boxes)', date: new Date().toLocaleDateString() },
+            { id: '2', name: 'Amitabh Sen', phone: '+91 94350 12345', interest: 'Smart Commode', note: 'Inquired 4 units', date: new Date().toLocaleDateString() }
+          ];
+
+          const csvHeaders = ['ID', 'Customer Name', 'Phone Number', 'Product Interest', 'Calculations', 'Date'];
+          const csvRows = dummyLeads.map(l => [l.id, `"${l.name}"`, `"${l.phone}"`, `"${l.interest}"`, `"${l.note}"`, `"${l.date}"`]);
+          const csvContent = [csvHeaders.join(','), ...csvRows.map(r => r.join(','))].join('\n');
+
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', `mr_tiles_leads_${Date.now()}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        };
+
+        const handleLoginSubmit = (e) => {
           e.preventDefault();
           if (username.trim() === 'Admin11' && password.trim() === 'Admin1234') {
             onLogin('mr_admin_token_' + Date.now());
           } else {
-            setError('Invalid credentials');
+            setLoginError('Invalid credentials');
           }
+        };
+
+        const handleAddSubmit = (e) => {
+          e.preventDefault();
+          if (!newName || !newPrice || !newStock) {
+            alert('Please fill in name, price, and stock count!');
+            return;
+          }
+
+          const matchedCat = categories.find(c => c.id === newCategory);
+
+          onAddProduct({
+            name: newName,
+            category: newCategory,
+            categoryLabel: matchedCat ? matchedCat.label : newCategory,
+            price: Number(newPrice),
+            unit: newUnit || 'sq.ft',
+            stock: Number(newStock),
+            dimensions: newDimensions || 'Standard',
+            finish: newFinish || 'High Gloss',
+            image: newImage || 'images/regal-white-marble.png',
+            description: newDescription || 'Premium quality product from M R Tiles & Sanitation.'
+          });
+
+          setShowAddModal(false);
+          setNewName('');
+          setNewPrice('');
+          setNewStock('');
+          setNewDescription('');
+        };
+
+        const handleAddCatSubmit = (e) => {
+          e.preventDefault();
+          if (!newCatLabel.trim()) return;
+          const catId = newCatLabel.toLowerCase().replace(/[^a-z0-9]/g, '-');
+          onAddCategory({ id: catId, label: newCatLabel });
+          setShowAddCatModal(false);
+          setNewCatLabel('');
         };
 
         if (!adminToken) {
@@ -545,8 +634,8 @@
             <div style={{ padding: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
               <div style={{ width: '100%', maxWidth: '380px', background: '#ffffff', borderRadius: '12px', padding: '1.5rem', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}>
                 <h2 style={{ fontSize: '1.35rem', color: '#0f172a', marginBottom: '1rem', textAlign: 'center' }}>Admin Portal Login</h2>
-                {error && <div style={{ background: '#fee2e2', color: '#c5221f', padding: '0.6rem', borderRadius: '6px', fontSize: '0.85rem', marginBottom: '1rem', textAlign: 'center', fontWeight: '600' }}>{error}</div>}
-                <form onSubmit={handleLogin}>
+                {loginError && <div style={{ background: '#fee2e2', color: '#c5221f', padding: '0.6rem', borderRadius: '6px', fontSize: '0.85rem', marginBottom: '1rem', textAlign: 'center', fontWeight: '600' }}>{loginError}</div>}
+                <form onSubmit={handleLoginSubmit}>
                   <div style={{ marginBottom: '1rem' }}>
                     <label style={{ display: 'block', fontSize: '0.8rem', color: '#64748b', marginBottom: '0.2rem' }}>Username</label>
                     <input type="text" required placeholder="Enter username" value={username} onChange={e => setUsername(e.target.value)} style={{ width: '100%', padding: '0.65rem', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '1rem' }} />
@@ -564,50 +653,78 @@
 
         return (
           <div className="admin-container" style={{ padding: '1rem' }}>
-            <h1 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Stock & Price Control Center</h1>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div>
+                <h1 style={{ fontSize: '1.5rem', color: '#0f172a' }}>Stock & Price Control Center</h1>
+                <p style={{ fontSize: '0.82rem', color: '#64748b' }}>Manage inventory, upload device photos, add categories, and export leads</p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button className="btn-secondary" onClick={exportLeadsCsv} style={{ padding: '0.5rem 0.8rem', fontSize: '0.8rem' }}>📄 Export CSV</button>
+                <button className="btn-secondary" onClick={() => setShowAddCatModal(true)} style={{ padding: '0.5rem 0.8rem', fontSize: '0.8rem' }}>➕ Add Category</button>
+                <button className="btn-primary" onClick={() => setShowAddModal(true)} style={{ padding: '0.5rem 0.8rem', fontSize: '0.8rem' }}>➕ Add Tile / Stock</button>
+              </div>
+            </div>
+
             <div className="admin-table-wrap" style={{ overflowX: 'auto' }}>
               <table className="admin-table" style={{ width: '100%', minWidth: '550px' }}>
                 <thead>
                   <tr>
-                    <th>Item</th>
+                    <th>Item / Image</th>
                     <th>Category</th>
                     <th>Price (₹)</th>
                     <th>Stock</th>
-                    <th>Actions</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {products.map(p => {
                     const displayUnit = p.unit || 'sq.ft';
+                    const displayImg = p.image || 'images/regal-white-marble.png';
+                    const isEditing = editingId === p.id;
+
                     return (
                       <tr key={p.id}>
                         <td>
-                          {editingId === p.id ? (
-                            <input type="text" value={editName} onChange={e => setEditName(e.target.value)} style={{ padding: '0.25rem', width: '120px' }} />
-                          ) : (
-                            <strong>{p.name}</strong>
-                          )}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                            <img src={displayImg} alt={p.name} className="table-img" onError={e => e.target.src = 'images/regal-white-marble.png'} />
+                            <div>
+                              {isEditing ? (
+                                <input type="text" value={editName} onChange={e => setEditName(e.target.value)} style={{ padding: '0.25rem', width: '120px' }} />
+                              ) : (
+                                <strong>{p.name}</strong>
+                              )}
+                              <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{p.dimensions}</div>
+                            </div>
+                          </div>
                         </td>
-                        <td>{p.categoryLabel || p.category}</td>
+
+                        <td style={{ fontSize: '0.8rem' }}>{p.categoryLabel || p.category}</td>
+
                         <td>
-                          {editingId === p.id ? (
+                          {isEditing ? (
                             <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} style={{ width: '65px', padding: '0.2rem' }} />
                           ) : (
                             `₹${p.price}/${displayUnit}`
                           )}
                         </td>
+
                         <td>
-                          {editingId === p.id ? (
+                          {isEditing ? (
                             <input type="number" value={editStock} onChange={e => setEditStock(e.target.value)} style={{ width: '65px', padding: '0.2rem' }} />
                           ) : (
                             `${p.stock} ${displayUnit}`
                           )}
                         </td>
-                        <td>
-                          {editingId === p.id ? (
-                            <button onClick={() => { onUpdateProduct(p.id, { name: editName, price: Number(editPrice), stock: Number(editStock), unit: displayUnit }); setEditingId(null); }}>Save</button>
+
+                        <td style={{ textAlign: 'right' }}>
+                          {isEditing ? (
+                            <button className="btn-primary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} onClick={() => { onUpdateProduct(p.id, { name: editName, price: Number(editPrice), stock: Number(editStock), unit: displayUnit }); setEditingId(null); }}>Save</button>
                           ) : (
-                            <button onClick={() => { setEditingId(p.id); setEditName(p.name); setEditPrice(p.price); setEditStock(p.stock); }}>Edit</button>
+                            <div style={{ display: 'flex', gap: '0.3rem', justifyContent: 'flex-end' }}>
+                              <button className="btn-secondary" style={{ padding: '0.3rem 0.5rem', fontSize: '0.75rem' }} onClick={() => { setEditingId(p.id); setEditName(p.name); setEditPrice(p.price); setEditStock(p.stock); }}>Edit</button>
+                              <button className="btn-secondary" style={{ padding: '0.3rem 0.5rem', fontSize: '0.75rem', color: '#c5221f', borderColor: '#f7c1c0' }} onClick={() => onDeleteProduct(p.id)}>Delete</button>
+                            </div>
                           )}
                         </td>
                       </tr>
@@ -616,6 +733,93 @@
                 </tbody>
               </table>
             </div>
+
+            {/* Add Product Modal */}
+            {showAddModal && (
+              <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+                <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px', width: '92%' }}>
+                  <button className="modal-close" onClick={() => setShowAddModal(false)}>✕</button>
+                  <h3 style={{ fontSize: '1.2rem', color: '#0f172a', marginBottom: '0.85rem' }}>Introduce New Product / Stock</h3>
+
+                  <form onSubmit={handleAddSubmit}>
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Product Name *</label>
+                      <input type="text" required placeholder="e.g. Italian Onyx Vitrified" value={newName} onChange={e => setNewName(e.target.value)} style={{ width: '100%', padding: '0.55rem', border: '1px solid #cbd5e1', borderRadius: '6px' }} />
+                    </div>
+
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Category Section *</label>
+                      <select value={newCategory} onChange={e => setNewCategory(e.target.value)} style={{ width: '100%', padding: '0.55rem', border: '1px solid #cbd5e1', borderRadius: '6px' }}>
+                        {categories.filter(c => c.id !== 'all').map(c => (
+                          <option key={c.id} value={c.id}>{c.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Direct Device Photo File Picker */}
+                    <div style={{ marginBottom: '0.85rem' }}>
+                      <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.25rem' }}>Upload Product Photo from Device *</label>
+                      <div style={{ border: '2px dashed #cbd5e1', borderRadius: '8px', padding: '0.75rem', textAlign: 'center', background: '#f8fafc' }}>
+                        <input type="file" accept="image/*" onChange={handleImageFileUpload} id="device-photo-input-root" style={{ display: 'none' }} />
+                        <label htmlFor="device-photo-input-root" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#0f172a', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                          📸 Select Photo from Device
+                        </label>
+                        {newImage && (
+                          <div style={{ marginTop: '0.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                            <img src={newImage} alt="Preview" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+                            <span style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 'bold' }}>✓ Photo Loaded</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Price (₹)</label>
+                        <input type="number" required placeholder="65" value={newPrice} onChange={e => setNewPrice(e.target.value)} style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px' }} />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Unit</label>
+                        <select value={newUnit} onChange={e => setNewUnit(e.target.value)} style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px' }}>
+                          <option value="sq.ft">sq.ft</option>
+                          <option value="piece">piece</option>
+                          <option value="box">box</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Stock</label>
+                        <input type="number" required placeholder="1000" value={newStock} onChange={e => setNewStock(e.target.value)} style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px' }} />
+                      </div>
+                    </div>
+
+                    <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.65rem' }}>
+                      ➕ Add Product to Inventory
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* Add Category Modal */}
+            {showAddCatModal && (
+              <div className="modal-overlay" onClick={() => setShowAddCatModal(false)}>
+                <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '380px', width: '92%' }}>
+                  <button className="modal-close" onClick={() => setShowAddCatModal(false)}>✕</button>
+                  <h3 style={{ fontSize: '1.15rem', color: '#0f172a', marginBottom: '0.85rem' }}>Add New Category Section</h3>
+
+                  <form onSubmit={handleAddCatSubmit}>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Category Name *</label>
+                      <input type="text" required placeholder="e.g. Granite & Marble" value={newCatLabel} onChange={e => setNewCatLabel(e.target.value)} style={{ width: '100%', padding: '0.55rem', border: '1px solid #cbd5e1', borderRadius: '6px' }} />
+                    </div>
+
+                    <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.65rem' }}>
+                      ➕ Add Category Section
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         );
       }
