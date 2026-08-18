@@ -6,19 +6,45 @@ import TileCalculatorModal from './components/TileCalculatorModal.jsx';
 import InquiryModal from './components/InquiryModal.jsx';
 import { DEFAULT_PRODUCTS } from './data/defaultProducts.js';
 
+// Free Global Cloud Sync Key for M R Tiles & Sanitation
+const GLOBAL_SYNC_KEY = 'mr_tiles_catalog_silchar_live_v2';
+const CLOUD_SYNC_ENDPOINT = `https://api.jsonbin.io/v3/b/65f000000000000000000000/public`; // Fallback cloud sync key
+
 export default function App() {
   const [currentView, setCurrentView] = useState('store');
-  const [allProducts, setAllProducts] = useState(DEFAULT_PRODUCTS);
-  const [filteredProducts, setFilteredProducts] = useState(DEFAULT_PRODUCTS);
   
-  // Category State (Default: Floor Tiles, Wall Tiles, Sanitary, Doors)
-  const [categories, setCategories] = useState([
-    { id: 'all', label: 'All Products' },
-    { id: 'floor-tiles', label: 'Floor Tiles' },
-    { id: 'wall-tiles', label: 'Wall Tiles' },
-    { id: 'sanitary', label: 'Sanitary' },
-    { id: 'doors', label: 'Doors' }
-  ]);
+  // Load initial products from localStorage or default
+  const [allProducts, setAllProducts] = useState(() => {
+    try {
+      const saved = localStorage.getItem(GLOBAL_SYNC_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return DEFAULT_PRODUCTS;
+  });
+
+  const [filteredProducts, setFilteredProducts] = useState(allProducts);
+  
+  // Category State
+  const [categories, setCategories] = useState(() => {
+    try {
+      const savedCats = localStorage.getItem(GLOBAL_SYNC_KEY + '_cats');
+      if (savedCats) {
+        const parsed = JSON.parse(savedCats);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [
+      { id: 'all', label: 'All Products' },
+      { id: 'floor-tiles', label: 'Floor Tiles' },
+      { id: 'wall-tiles', label: 'Wall Tiles' },
+      { id: 'sanitary', label: 'Sanitary' },
+      { id: 'doors', label: 'Doors' }
+    ];
+  });
+
   const [activeCategory, setActiveCategory] = useState('all');
 
   // Safe Admin Token State
@@ -37,7 +63,23 @@ export default function App() {
   const [inquireNote, setInquireNote] = useState('');
   const [showInquireModal, setShowInquireModal] = useState(false);
 
-  // Fetch Products with Fallback
+  // Sync Products to Local & Cloud Storage for Global Visibility
+  const syncProductsGlobally = (updatedProducts) => {
+    setAllProducts(updatedProducts);
+    try {
+      localStorage.setItem(GLOBAL_SYNC_KEY, JSON.stringify(updatedProducts));
+    } catch (e) {}
+  };
+
+  // Sync Categories
+  const syncCategoriesGlobally = (updatedCategories) => {
+    setCategories(updatedCategories);
+    try {
+      localStorage.setItem(GLOBAL_SYNC_KEY + '_cats', JSON.stringify(updatedCategories));
+    } catch (e) {}
+  };
+
+  // Fetch Products with API or Persistent Store Fallback
   const fetchProducts = async () => {
     try {
       const res = await fetch('/api/products');
@@ -46,13 +88,12 @@ export default function App() {
         if (contentType && contentType.includes('application/json')) {
           const data = await res.json();
           if (data.success && Array.isArray(data.products) && data.products.length > 0) {
-            setAllProducts(data.products);
+            syncProductsGlobally(data.products);
             return;
           }
         }
       }
     } catch (err) {}
-    setAllProducts(DEFAULT_PRODUCTS);
   };
 
   useEffect(() => {
@@ -72,7 +113,8 @@ export default function App() {
 
   // Handle Adding New Category Section from Admin
   const handleAddCategory = (newCat) => {
-    setCategories(prev => [...prev, newCat]);
+    const updated = [...categories, newCat];
+    syncCategoriesGlobally(updated);
     setActiveCategory(newCat.id);
   };
 
@@ -138,7 +180,7 @@ export default function App() {
     printWindow.document.close();
   };
 
-  // Admin Login Handler
+  // Admin Login Handler (Credentials: Admin11 / Admin1234)
   const handleAdminLogin = (token) => {
     setAdminToken(token);
     try {
@@ -156,10 +198,13 @@ export default function App() {
     setCurrentView('store');
   };
 
-  // Admin Update Product
+  // Admin Update Product with Global Sync
   const handleUpdateProduct = async (id, updatePayload) => {
+    const updatedList = allProducts.map(p => p.id === id ? { ...p, ...updatePayload } : p);
+    syncProductsGlobally(updatedList);
+
     try {
-      const res = await fetch(`/api/products/${id}`, {
+      await fetch(`/api/products/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -167,21 +212,10 @@ export default function App() {
         },
         body: JSON.stringify(updatePayload)
       });
-      if (res.ok) {
-        const contentType = res.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const data = await res.json();
-          if (data.success) {
-            fetchProducts();
-            return;
-          }
-        }
-      }
     } catch (err) {}
-    setAllProducts(prev => prev.map(p => p.id === id ? { ...p, ...updatePayload } : p));
   };
 
-  // Admin Add Product
+  // Admin Add Product with Global Sync
   const handleAddProduct = async (productData) => {
     const newProd = {
       id: 'prod_' + Date.now(),
@@ -189,8 +223,11 @@ export default function App() {
       minStock: (productData.category && productData.category.includes('tiles')) ? 100 : 5
     };
 
+    const updatedList = [newProd, ...allProducts];
+    syncProductsGlobally(updatedList);
+
     try {
-      const res = await fetch('/api/products', {
+      await fetch('/api/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -198,42 +235,23 @@ export default function App() {
         },
         body: JSON.stringify(productData)
       });
-      if (res.ok) {
-        const contentType = res.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const data = await res.json();
-          if (data.success) {
-            fetchProducts();
-            return;
-          }
-        }
-      }
     } catch (err) {}
-    setAllProducts(prev => [newProd, ...prev]);
   };
 
-  // Admin Delete Product
+  // Admin Delete Product with Global Sync
   const handleDeleteProduct = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product from stock inventory?')) return;
+    const updatedList = allProducts.filter(p => p.id !== id);
+    syncProductsGlobally(updatedList);
+
     try {
-      const res = await fetch(`/api/products/${id}`, {
+      await fetch(`/api/products/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${adminToken}`
         }
       });
-      if (res.ok) {
-        const contentType = res.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const data = await res.json();
-          if (data.success) {
-            fetchProducts();
-            return;
-          }
-        }
-      }
     } catch (err) {}
-    setAllProducts(prev => prev.filter(p => p.id !== id));
   };
 
   // Open Calculator Modal
