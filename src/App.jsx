@@ -26,14 +26,24 @@ export default function App() {
 
   const [filteredProducts, setFilteredProducts] = useState(allProducts);
 
-  // Category State
-  const [categories, setCategories] = useState([
-    { id: 'all', label: 'All Products' },
-    { id: 'floor-tiles', label: 'Floor Tiles' },
-    { id: 'wall-tiles', label: 'Wall Tiles' },
-    { id: 'sanitary', label: 'Sanitary' },
-    { id: 'doors', label: 'Doors' }
-  ]);
+  // Category State Loader
+  const [categories, setCategories] = useState(() => {
+    try {
+      const savedCats = localStorage.getItem('mr_tiles_custom_categories_v2');
+      if (savedCats) {
+        const parsed = JSON.parse(savedCats);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [
+      { id: 'all', label: 'All Products' },
+      { id: 'floor-tiles', label: 'Floor Tiles' },
+      { id: 'wall-tiles', label: 'Wall Tiles' },
+      { id: 'sanitary', label: 'Sanitary' },
+      { id: 'doors', label: 'Doors' }
+    ];
+  });
+
   const [activeCategory, setActiveCategory] = useState('all');
 
   // Safe Admin Token State
@@ -78,9 +88,7 @@ export default function App() {
           } catch (e) {}
         }
       }
-    } catch (err) {
-      console.log('Central Server Poll Notice: Using local state while reconnecting...');
-    }
+    } catch (err) {}
   };
 
   // Poll central Render backend server every 4 seconds for real-time cross-device updates
@@ -89,6 +97,32 @@ export default function App() {
     const timer = setInterval(fetchLiveCloudProducts, 4000);
     return () => clearInterval(timer);
   }, []);
+
+  // Dynamically sync custom categories across devices based on product catalog
+  useEffect(() => {
+    if (allProducts && allProducts.length > 0) {
+      const knownIds = new Set(categories.map(c => c.id));
+      const newFoundCats = [];
+
+      allProducts.forEach(p => {
+        if (p.category && !knownIds.has(p.category)) {
+          knownIds.add(p.category);
+          newFoundCats.push({
+            id: p.category,
+            label: p.categoryLabel || p.category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+          });
+        }
+      });
+
+      if (newFoundCats.length > 0) {
+        const updated = [...categories, ...newFoundCats];
+        setCategories(updated);
+        try {
+          localStorage.setItem('mr_tiles_custom_categories_v2', JSON.stringify(updated));
+        } catch (e) {}
+      }
+    }
+  }, [allProducts]);
 
   // Save Products to State, Local Storage & Central Render Server Database
   const saveProductsList = async (updatedList) => {
@@ -137,6 +171,9 @@ export default function App() {
     const updatedCats = [...categories, newCat];
     setCategories(updatedCats);
     setActiveCategory(newCat.id);
+    try {
+      localStorage.setItem('mr_tiles_custom_categories_v2', JSON.stringify(updatedCats));
+    } catch (e) {}
   };
 
   // Download PDF Catalog Generator

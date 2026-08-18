@@ -367,6 +367,28 @@
           return () => clearInterval(timer);
         }, []);
 
+        // Dynamically sync custom categories across devices based on product catalog
+        useEffect(() => {
+          if (products && products.length > 0) {
+            const knownIds = new Set(categories.map(c => c.id));
+            const newFoundCats = [];
+
+            products.forEach(p => {
+              if (p.category && !knownIds.has(p.category)) {
+                knownIds.add(p.category);
+                newFoundCats.push({
+                  id: p.category,
+                  label: p.categoryLabel || p.category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+                });
+              }
+            });
+
+            if (newFoundCats.length > 0) {
+              setCategories(prev => [...prev, ...newFoundCats]);
+            }
+          }
+        }, [products]);
+
         // Push Updates to State, Local & Cloud DB
         const pushToCloud = async (updatedList) => {
           const sanitized = updatedList.map(p => ({
