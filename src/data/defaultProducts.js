@@ -42,8 +42,8 @@ export const DEFAULT_PRODUCTS = [
   {
     "id": "prod_3",
     "name": "Wall Hung Basin",
-    "category": "bathroom-fittings",
-    "categoryLabel": "Bathroom Fittings",
+    "category": "sanitary",
+    "categoryLabel": "Sanitary",
     "price": 4850,
     "unit": "piece",
     "stock": 24,
@@ -61,8 +61,8 @@ export const DEFAULT_PRODUCTS = [
   {
     "id": "prod_4",
     "name": "Smart Commode",
-    "category": "bathroom-fittings",
-    "categoryLabel": "Bathroom Fittings",
+    "category": "sanitary",
+    "categoryLabel": "Sanitary",
     "price": 6950,
     "unit": "piece",
     "stock": 12,
@@ -99,42 +99,22 @@ export const DEFAULT_PRODUCTS = [
   },
   {
     "id": "prod_6",
-    "name": "Matte Black Shower Mixer",
-    "category": "bathroom-fittings",
-    "categoryLabel": "Bathroom Fittings",
-    "price": 3400,
+    "name": "Luxury Teak Finish Designer Door",
+    "category": "doors",
+    "categoryLabel": "Doors",
+    "price": 8500,
     "unit": "piece",
-    "stock": 4,
-    "minStock": 5,
-    "dimensions": "Standard 150mm Inlet",
-    "finish": "Electroplated Matte Black",
-    "material": "Solid Brass Core",
-    "image": "images/wall-hung-basin.png",
-    "description": "Thermostatic rain shower diverter mixer tap with sleek PVD coating.",
-    "colors": [
-      { "name": "Matte Black", "hex": "#0f172a" },
-      { "name": "Chrome Silver", "hex": "#cbd5e1" },
-      { "name": "Rose Gold", "hex": "#fde68a" }
-    ]
-  },
-  {
-    "id": "prod_7",
-    "name": "Quartz Kitchen Countertop",
-    "category": "kitchen-solutions",
-    "categoryLabel": "Kitchen Solutions",
-    "price": 140,
-    "unit": "sq.ft",
-    "stock": 40,
-    "minStock": 50,
-    "dimensions": "Slab Size 10x4 ft",
-    "finish": "Polished Quartz",
-    "material": "Engineered Quartz",
+    "stock": 15,
+    "minStock": 3,
+    "dimensions": "7x3 ft (84x36 in)",
+    "finish": "Waterproof WPC Teak Finish",
+    "material": "Wood Polymer Composite",
     "image": "images/moroccan-grey.png",
-    "description": "Heat resistant, non-porous engineered quartz kitchen countertop slab.",
+    "description": "Termite proof, 100% waterproof heavy duty WPC designer entry door.",
     "colors": [
-      { "name": "Sparkle White", "hex": "#ffffff" },
-      { "name": "Granite Grey", "hex": "#64748b" },
-      { "name": "Nero Black", "hex": "#1e293b" }
+      { "name": "Burma Teak", "hex": "#78350f" },
+      { "name": "Walnut Dark", "hex": "#451a03" },
+      { "name": "Classic Oak", "hex": "#92400e" }
     ]
   }
 ];

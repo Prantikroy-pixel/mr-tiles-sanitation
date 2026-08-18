@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Calculator, MapPin, Phone, Clock, Download } from 'lucide-react';
 
-export default function CustomerStore({ products, activeCategory, setActiveCategory, onOpenCalc, onInquire, onDownloadPdf }) {
+export default function CustomerStore({ 
+  products, 
+  categories, 
+  activeCategory, 
+  setActiveCategory, 
+  onOpenCalc, 
+  onInquire, 
+  onDownloadPdf 
+}) {
   const [selectedColors, setSelectedColors] = useState({});
-
-  const categories = [
-    { id: 'all', label: 'All Products' },
-    { id: 'floor-tiles', label: 'Floor Tiles' },
-    { id: 'wall-tiles', label: 'Wall Tiles' },
-    { id: 'bathroom-fittings', label: 'Bathroom Fittings' },
-    { id: 'kitchen-solutions', label: 'Kitchen Solutions' }
-  ];
 
   const handleColorSelect = (productId, colorName) => {
     setSelectedColors(prev => ({ ...prev, [productId]: colorName }));
@@ -59,7 +59,7 @@ export default function CustomerStore({ products, activeCategory, setActiveCateg
       <section className="catalog-section">
         {products.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3.5rem 1rem', color: 'var(--text-muted)' }}>
-            <p style={{ fontSize: '1.1rem' }}>No products found matching your filter.</p>
+            <p style={{ fontSize: '1.1rem' }}>No products found in this category.</p>
             <button className="btn-secondary" style={{ marginTop: '1rem' }} onClick={() => setActiveCategory('all')}>
               Reset Category Filter
             </button>
@@ -144,9 +144,9 @@ export default function CustomerStore({ products, activeCategory, setActiveCateg
         )}
       </section>
 
-      {/* Showroom & Business Details */}
+      {/* Showroom Location & Embedded Google Map */}
       <section style={{ maxWidth: '1200px', margin: '3rem auto', padding: '0 1.5rem' }}>
-        <div style={{ background: '#ffffff', borderRadius: 'var(--radius-lg)', padding: '2rem', border: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
+        <div style={{ background: '#ffffff', borderRadius: 'var(--radius-lg)', padding: '2rem', border: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-dark)', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.4rem' }}>
               <MapPin size={16} /> VISIT OUR SHOWROOM
@@ -156,7 +156,7 @@ export default function CustomerStore({ products, activeCategory, setActiveCateg
               Trinayani Ln, near Karan TVS Showroom, Kanakpur, Silchar, Assam - 788006
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.88rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.88rem', marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-dark)' }}>
                 <Phone size={16} style={{ color: 'var(--text-dark)' }} />
                 <strong>Call / WhatsApp:</strong> +91 60013 99842
@@ -166,21 +166,29 @@ export default function CustomerStore({ products, activeCategory, setActiveCateg
                 <strong>Opening Hours:</strong> Mon - Sat (9:30 AM to 8:00 PM)
               </div>
             </div>
+
+            <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+              <h3 style={{ fontSize: '1rem', color: 'var(--text-dark)', marginBottom: '0.5rem' }}>Why Choose M R Tiles?</h3>
+              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                <li>✓ Direct factory pricing on vitrified floor & wall tiles</li>
+                <li>✓ Premium ceramic sanitaryware & designer doors</li>
+                <li>✓ On-time safe delivery across Cachar & Silchar</li>
+              </ul>
+            </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.85rem', background: '#f8fafc', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-            <h3 style={{ fontSize: '1.15rem', color: 'var(--text-dark)' }}>Why Choose M R Tiles?</h3>
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              <li style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                <span style={{ color: '#16a34a', fontWeight: 'bold' }}>✓</span> Direct factory pricing on vitrified & porcelain tiles
-              </li>
-              <li style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                <span style={{ color: '#16a34a', fontWeight: 'bold' }}>✓</span> Live tile finish and color choice selection
-              </li>
-              <li style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                <span style={{ color: '#16a34a', fontWeight: 'bold' }}>✓</span> Safe transport & on-time delivery across Cachar & Silchar
-              </li>
-            </ul>
+          {/* Embedded Google Map iframe */}
+          <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-color)', minHeight: '300px' }}>
+            <iframe 
+              title="M R Tiles & Sanitation Showroom Location"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14486.208882046487!2d92.7937!3d24.8189!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x374e4a0555555555%3A0x123456789abcdef!2sKanakpur%2C%20Silchar%2C%20Assam%20788006!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin" 
+              width="100%" 
+              height="100%" 
+              style={{ border: 0, minHeight: '300px' }} 
+              allowFullScreen="" 
+              loading="lazy" 
+              referrerPolicy="no-referrer-when-downgrade"
+            />
           </div>
         </div>
       </section>

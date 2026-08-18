@@ -10,6 +10,15 @@ export default function App() {
   const [currentView, setCurrentView] = useState('store');
   const [allProducts, setAllProducts] = useState(DEFAULT_PRODUCTS);
   const [filteredProducts, setFilteredProducts] = useState(DEFAULT_PRODUCTS);
+  
+  // Category State (Default: Floor Tiles, Wall Tiles, Sanitary, Doors)
+  const [categories, setCategories] = useState([
+    { id: 'all', label: 'All Products' },
+    { id: 'floor-tiles', label: 'Floor Tiles' },
+    { id: 'wall-tiles', label: 'Wall Tiles' },
+    { id: 'sanitary', label: 'Sanitary' },
+    { id: 'doors', label: 'Doors' }
+  ]);
   const [activeCategory, setActiveCategory] = useState('all');
 
   // Safe Admin Token State
@@ -61,6 +70,12 @@ export default function App() {
     setFilteredProducts(result);
   }, [allProducts, activeCategory]);
 
+  // Handle Adding New Category Section from Admin
+  const handleAddCategory = (newCat) => {
+    setCategories(prev => [...prev, newCat]);
+    setActiveCategory(newCat.id);
+  };
+
   // Download PDF Catalog Generator
   const handleDownloadPdf = () => {
     const printWindow = window.open('', '_blank');
@@ -101,7 +116,7 @@ export default function App() {
             <thead>
               <tr>
                 <th>Product Item</th>
-                <th>Category</th>
+                <th>Category Section</th>
                 <th>Dimensions</th>
                 <th>Color Choices</th>
                 <th>Price</th>
@@ -112,7 +127,7 @@ export default function App() {
             </tbody>
           </table>
           <div class="footer">
-            © ${new Date().getFullYear()} M R TILES AND SANITATION. All prices are trade prices per unit. Contact showroom for bulk discount quotes.
+            © ${new Date().getFullYear()} BLUE LEAF TECH. All rights reserved.
           </div>
           <script>
             window.onload = function() { window.print(); };
@@ -168,17 +183,9 @@ export default function App() {
 
   // Admin Add Product
   const handleAddProduct = async (productData) => {
-    const categoryLabels = {
-      'floor-tiles': 'Floor Tiles',
-      'wall-tiles': 'Wall Tiles',
-      'bathroom-fittings': 'Bathroom Fittings',
-      'kitchen-solutions': 'Kitchen Solutions'
-    };
-
     const newProd = {
       id: 'prod_' + Date.now(),
       ...productData,
-      categoryLabel: categoryLabels[productData.category] || productData.category,
       minStock: (productData.category && productData.category.includes('tiles')) ? 100 : 5
     };
 
@@ -254,6 +261,7 @@ export default function App() {
       {currentView === 'store' ? (
         <CustomerStore 
           products={filteredProducts}
+          categories={categories}
           activeCategory={activeCategory}
           setActiveCategory={setActiveCategory}
           onOpenCalc={openCalculator}
@@ -263,12 +271,13 @@ export default function App() {
       ) : (
         <AdminPortal 
           products={allProducts}
+          categories={categories}
           adminToken={adminToken}
           onLogin={handleAdminLogin}
           onUpdateProduct={handleUpdateProduct}
           onAddProduct={handleAddProduct}
           onDeleteProduct={handleDeleteProduct}
-          onRefresh={fetchProducts}
+          onAddCategory={handleAddCategory}
         />
       )}
 
@@ -316,7 +325,7 @@ export default function App() {
         </div>
 
         <div className="footer-bottom">
-          © {new Date().getFullYear()} M R TILES AND SANITATION. All rights reserved.
+          © {new Date().getFullYear()} BLUE LEAF TECH. All rights reserved.
         </div>
       </footer>
     </div>
