@@ -6,14 +6,14 @@ import TileCalculatorModal from './components/TileCalculatorModal.jsx';
 import InquiryModal from './components/InquiryModal.jsx';
 import { DEFAULT_PRODUCTS } from './data/defaultProducts.js';
 
-// Real-Time Free Cloud Database for M R Tiles & Sanitation (Cross-Device Global Sync)
-const CLOUD_API_URL = 'https://api.npoint.io/9a85d34208bbdfc3c95a';
+// Live Cross-Device Cloud Sync Database Endpoint for M R Tiles & Sanitation
+const LIVE_CLOUD_OBJECT_ID = 'ff8081819ff5b11001a0152985c04392';
+const LIVE_CLOUD_API_URL = `https://api.restful-api.dev/objects/${LIVE_CLOUD_OBJECT_ID}`;
 
 export default function App() {
   const [currentView, setCurrentView] = useState('store');
   const [allProducts, setAllProducts] = useState(DEFAULT_PRODUCTS);
   const [filteredProducts, setFilteredProducts] = useState(DEFAULT_PRODUCTS);
-  const [isLoadingCloud, setIsLoadingCloud] = useState(true);
 
   // Category State
   const [categories, setCategories] = useState([
@@ -41,56 +41,67 @@ export default function App() {
   const [inquireNote, setInquireNote] = useState('');
   const [showInquireModal, setShowInquireModal] = useState(false);
 
-  // Fetch Live Global Products from Cloud DB (Works across ALL devices worldwide)
-  const fetchCloudProducts = async () => {
+  // Fetch Live Products from Global Cloud Database (Syncs across ALL devices worldwide!)
+  const fetchLiveCloudProducts = async () => {
     try {
-      const res = await fetch(CLOUD_API_URL);
+      const res = await fetch(LIVE_CLOUD_API_URL);
       if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setAllProducts(data);
-          setIsLoadingCloud(false);
+        const result = await res.json();
+        if (result && result.data && Array.isArray(result.data.products) && result.data.products.length > 0) {
+          setAllProducts(result.data.products);
+          try {
+            localStorage.setItem('mr_tiles_cached_catalog', JSON.stringify(result.data.products));
+          } catch (e) {}
           return;
         }
       }
     } catch (err) {
-      console.log('Using default product catalog fallback');
+      console.log('Error connecting to cloud DB, using cached products');
     }
 
-    // Backup LocalStorage Check
+    // Fallback Local Cache Check
     try {
-      const saved = localStorage.getItem('mr_tiles_catalog_local');
-      if (saved) {
-        const parsed = JSON.parse(saved);
+      const cached = localStorage.getItem('mr_tiles_cached_catalog');
+      if (cached) {
+        const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
           setAllProducts(parsed);
         }
       }
     } catch (e) {}
-    setIsLoadingCloud(false);
   };
 
+  // Poll cloud database on mount and periodically every 12 seconds so Device B automatically sees Device A edits
   useEffect(() => {
-    fetchCloudProducts();
+    fetchLiveCloudProducts();
+    const interval = setInterval(() => {
+      fetchLiveCloudProducts();
+    }, 12000);
+    return () => clearInterval(interval);
   }, []);
 
-  // Save Products to Real-Time Cloud DB so ALL devices see the changes instantly
-  const saveProductsToCloud = async (newProductsList) => {
+  // Save Product Catalog to Global Cloud DB so EVERY Device in the World Updates Live
+  const pushProductsToGlobalCloud = async (newProductsList) => {
     setAllProducts(newProductsList);
     try {
-      localStorage.setItem('mr_tiles_catalog_local', JSON.stringify(newProductsList));
+      localStorage.setItem('mr_tiles_cached_catalog', JSON.stringify(newProductsList));
     } catch (e) {}
 
     try {
-      await fetch(CLOUD_API_URL, {
-        method: 'POST',
+      await fetch(LIVE_CLOUD_API_URL, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(newProductsList)
+        body: JSON.stringify({
+          name: 'mr_tiles_catalog',
+          data: {
+            products: newProductsList
+          }
+        })
       });
     } catch (err) {
-      console.error('Cloud Sync Error:', err);
+      console.error('Cloud Sync Failed:', err);
     }
   };
 
@@ -192,13 +203,13 @@ export default function App() {
     setCurrentView('store');
   };
 
-  // Admin Update Product with Cross-Device Cloud Sync
+  // Admin Update Product with Real-Time Global Cloud Sync
   const handleUpdateProduct = async (id, updatePayload) => {
     const updatedList = allProducts.map(p => p.id === id ? { ...p, ...updatePayload } : p);
-    await saveProductsToCloud(updatedList);
+    await pushProductsToGlobalCloud(updatedList);
   };
 
-  // Admin Add Product with Cross-Device Cloud Sync
+  // Admin Add Product with Real-Time Global Cloud Sync
   const handleAddProduct = async (productData) => {
     const newProd = {
       id: 'prod_' + Date.now(),
@@ -207,14 +218,14 @@ export default function App() {
     };
 
     const updatedList = [newProd, ...allProducts];
-    await saveProductsToCloud(updatedList);
+    await pushProductsToGlobalCloud(updatedList);
   };
 
-  // Admin Delete Product with Cross-Device Cloud Sync
+  // Admin Delete Product with Real-Time Global Cloud Sync
   const handleDeleteProduct = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product from stock inventory?')) return;
     const updatedList = allProducts.filter(p => p.id !== id);
-    await saveProductsToCloud(updatedList);
+    await pushProductsToGlobalCloud(updatedList);
   };
 
   // Open Calculator Modal
