@@ -6,45 +6,23 @@ import TileCalculatorModal from './components/TileCalculatorModal.jsx';
 import InquiryModal from './components/InquiryModal.jsx';
 import { DEFAULT_PRODUCTS } from './data/defaultProducts.js';
 
-// Free Global Cloud Sync Key for M R Tiles & Sanitation
-const GLOBAL_SYNC_KEY = 'mr_tiles_catalog_silchar_live_v2';
-const CLOUD_SYNC_ENDPOINT = `https://api.jsonbin.io/v3/b/65f000000000000000000000/public`; // Fallback cloud sync key
+// Real-Time Free Cloud Database for M R Tiles & Sanitation (Cross-Device Global Sync)
+const CLOUD_API_URL = 'https://api.npoint.io/9a85d34208bbdfc3c95a';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('store');
-  
-  // Load initial products from localStorage or default
-  const [allProducts, setAllProducts] = useState(() => {
-    try {
-      const saved = localStorage.getItem(GLOBAL_SYNC_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {}
-    return DEFAULT_PRODUCTS;
-  });
+  const [allProducts, setAllProducts] = useState(DEFAULT_PRODUCTS);
+  const [filteredProducts, setFilteredProducts] = useState(DEFAULT_PRODUCTS);
+  const [isLoadingCloud, setIsLoadingCloud] = useState(true);
 
-  const [filteredProducts, setFilteredProducts] = useState(allProducts);
-  
   // Category State
-  const [categories, setCategories] = useState(() => {
-    try {
-      const savedCats = localStorage.getItem(GLOBAL_SYNC_KEY + '_cats');
-      if (savedCats) {
-        const parsed = JSON.parse(savedCats);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {}
-    return [
-      { id: 'all', label: 'All Products' },
-      { id: 'floor-tiles', label: 'Floor Tiles' },
-      { id: 'wall-tiles', label: 'Wall Tiles' },
-      { id: 'sanitary', label: 'Sanitary' },
-      { id: 'doors', label: 'Doors' }
-    ];
-  });
-
+  const [categories, setCategories] = useState([
+    { id: 'all', label: 'All Products' },
+    { id: 'floor-tiles', label: 'Floor Tiles' },
+    { id: 'wall-tiles', label: 'Wall Tiles' },
+    { id: 'sanitary', label: 'Sanitary' },
+    { id: 'doors', label: 'Doors' }
+  ]);
   const [activeCategory, setActiveCategory] = useState('all');
 
   // Safe Admin Token State
@@ -63,42 +41,58 @@ export default function App() {
   const [inquireNote, setInquireNote] = useState('');
   const [showInquireModal, setShowInquireModal] = useState(false);
 
-  // Sync Products to Local & Cloud Storage for Global Visibility
-  const syncProductsGlobally = (updatedProducts) => {
-    setAllProducts(updatedProducts);
+  // Fetch Live Global Products from Cloud DB (Works across ALL devices worldwide)
+  const fetchCloudProducts = async () => {
     try {
-      localStorage.setItem(GLOBAL_SYNC_KEY, JSON.stringify(updatedProducts));
-    } catch (e) {}
-  };
-
-  // Sync Categories
-  const syncCategoriesGlobally = (updatedCategories) => {
-    setCategories(updatedCategories);
-    try {
-      localStorage.setItem(GLOBAL_SYNC_KEY + '_cats', JSON.stringify(updatedCategories));
-    } catch (e) {}
-  };
-
-  // Fetch Products with API or Persistent Store Fallback
-  const fetchProducts = async () => {
-    try {
-      const res = await fetch('/api/products');
+      const res = await fetch(CLOUD_API_URL);
       if (res.ok) {
-        const contentType = res.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const data = await res.json();
-          if (data.success && Array.isArray(data.products) && data.products.length > 0) {
-            syncProductsGlobally(data.products);
-            return;
-          }
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setAllProducts(data);
+          setIsLoadingCloud(false);
+          return;
         }
       }
-    } catch (err) {}
+    } catch (err) {
+      console.log('Using default product catalog fallback');
+    }
+
+    // Backup LocalStorage Check
+    try {
+      const saved = localStorage.getItem('mr_tiles_catalog_local');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setAllProducts(parsed);
+        }
+      }
+    } catch (e) {}
+    setIsLoadingCloud(false);
   };
 
   useEffect(() => {
-    fetchProducts();
+    fetchCloudProducts();
   }, []);
+
+  // Save Products to Real-Time Cloud DB so ALL devices see the changes instantly
+  const saveProductsToCloud = async (newProductsList) => {
+    setAllProducts(newProductsList);
+    try {
+      localStorage.setItem('mr_tiles_catalog_local', JSON.stringify(newProductsList));
+    } catch (e) {}
+
+    try {
+      await fetch(CLOUD_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newProductsList)
+      });
+    } catch (err) {
+      console.error('Cloud Sync Error:', err);
+    }
+  };
 
   // Filter products based on active category
   useEffect(() => {
@@ -113,8 +107,8 @@ export default function App() {
 
   // Handle Adding New Category Section from Admin
   const handleAddCategory = (newCat) => {
-    const updated = [...categories, newCat];
-    syncCategoriesGlobally(updated);
+    const updatedCats = [...categories, newCat];
+    setCategories(updatedCats);
     setActiveCategory(newCat.id);
   };
 
@@ -198,24 +192,13 @@ export default function App() {
     setCurrentView('store');
   };
 
-  // Admin Update Product with Global Sync
+  // Admin Update Product with Cross-Device Cloud Sync
   const handleUpdateProduct = async (id, updatePayload) => {
     const updatedList = allProducts.map(p => p.id === id ? { ...p, ...updatePayload } : p);
-    syncProductsGlobally(updatedList);
-
-    try {
-      await fetch(`/api/products/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${adminToken}`
-        },
-        body: JSON.stringify(updatePayload)
-      });
-    } catch (err) {}
+    await saveProductsToCloud(updatedList);
   };
 
-  // Admin Add Product with Global Sync
+  // Admin Add Product with Cross-Device Cloud Sync
   const handleAddProduct = async (productData) => {
     const newProd = {
       id: 'prod_' + Date.now(),
@@ -224,34 +207,14 @@ export default function App() {
     };
 
     const updatedList = [newProd, ...allProducts];
-    syncProductsGlobally(updatedList);
-
-    try {
-      await fetch('/api/products', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${adminToken}`
-        },
-        body: JSON.stringify(productData)
-      });
-    } catch (err) {}
+    await saveProductsToCloud(updatedList);
   };
 
-  // Admin Delete Product with Global Sync
+  // Admin Delete Product with Cross-Device Cloud Sync
   const handleDeleteProduct = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product from stock inventory?')) return;
     const updatedList = allProducts.filter(p => p.id !== id);
-    syncProductsGlobally(updatedList);
-
-    try {
-      await fetch(`/api/products/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${adminToken}`
-        }
-      });
-    } catch (err) {}
+    await saveProductsToCloud(updatedList);
   };
 
   // Open Calculator Modal
