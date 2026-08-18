@@ -26,7 +26,7 @@ export default function CustomerStore({
         <h1 className="hero-heading">
           Premium Tiles & <span>Sanitary Solutions</span>
         </h1>
-        <p className="hero-desc">
+        <p className="hero-desc" style={{ fontWeight: '600', letterSpacing: '0.04em', color: '#475569', fontSize: '1.05rem', margin: '0 auto 1.5rem' }}>
           Quality • Design • Durability
         </p>
 
