@@ -44,7 +44,7 @@ export default function AdminPortal({
     if (file) {
       const reader = new FileReader();
       reader.onload = (uploadEvent) => {
-        setNewImage(uploadEvent.target.result); // Base64 data URL
+        setNewImage(uploadEvent.target.result); // Base64 data URL from local device!
       };
       reader.readAsDataURL(file);
     }
@@ -201,7 +201,7 @@ export default function AdminPortal({
       <div className="admin-header" style={{ marginBottom: '1.25rem' }}>
         <div>
           <h1 style={{ fontSize: '1.5rem', color: '#0f172a' }}>Stock & Price Control Center</h1>
-          <p style={{ fontSize: '0.82rem', color: '#64748b' }}>Manage inventory, upload device photos, and export leads</p>
+          <p style={{ fontSize: '0.82rem', color: '#64748b' }}>Manage inventory, upload device photos, add categories, and export leads</p>
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', width: '100%', marginTop: '0.75rem' }}>
@@ -209,10 +209,10 @@ export default function AdminPortal({
             <Download size={14} /> Export CSV
           </button>
           <button className="btn-secondary" onClick={() => setShowAddCatModal(true)} style={{ padding: '0.55rem 0.8rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center' }}>
-            <Plus size={14} /> Category
+            <Plus size={14} /> Add Category
           </button>
           <button className="btn-primary" onClick={() => setShowAddModal(true)} style={{ padding: '0.55rem 0.8rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center' }}>
-            <Plus size={16} /> Add Tile
+            <Plus size={16} /> Add Tile / Stock
           </button>
         </div>
       </div>

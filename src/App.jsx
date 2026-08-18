@@ -6,17 +6,13 @@ import TileCalculatorModal from './components/TileCalculatorModal.jsx';
 import InquiryModal from './components/InquiryModal.jsx';
 import { DEFAULT_PRODUCTS } from './data/defaultProducts.js';
 
-// Live Cross-Device Cloud Sync Database Endpoint for M R Tiles & Sanitation
-const LIVE_CLOUD_OBJECT_ID = 'ff8081819ff5b11001a0152985c04392';
-const LIVE_CLOUD_API_URL = `https://api.restful-api.dev/objects/${LIVE_CLOUD_OBJECT_ID}`;
-
 export default function App() {
   const [currentView, setCurrentView] = useState('store');
   
   // Safe Product State Loader
   const [allProducts, setAllProducts] = useState(() => {
     try {
-      const saved = localStorage.getItem('mr_tiles_cached_catalog_v2');
+      const saved = localStorage.getItem('mr_tiles_cached_catalog_v4');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -53,28 +49,28 @@ export default function App() {
   const [inquireNote, setInquireNote] = useState('');
   const [showInquireModal, setShowInquireModal] = useState(false);
 
-  // Fetch Live Products from Global Cloud Database
+  // Fetch Live Products from Server API
   const fetchLiveCloudProducts = async () => {
     try {
-      const res = await fetch(LIVE_CLOUD_API_URL);
+      const res = await fetch('/api/products');
       if (res.ok) {
         const result = await res.json();
-        if (result && result.data && Array.isArray(result.data.products) && result.data.products.length > 0) {
+        const prodList = result.products || (Array.isArray(result) ? result : null);
+        if (prodList && Array.isArray(prodList) && prodList.length > 0) {
           setAllProducts(prev => {
-            // Merge cloud products while preserving any newly added local items
-            const cloudProds = result.data.products.map(p => ({
+            const cloudProds = prodList.map(p => ({
               ...p,
               unit: p.unit || 'sq.ft',
               image: p.image || 'images/regal-white-marble.png'
             }));
 
-            // Keep locally added products if not in cloud
+            // Merge cloud data with locally added products
             const cloudIds = new Set(cloudProds.map(c => c.id));
             const newLocalProds = prev.filter(p => !cloudIds.has(p.id));
-
             const merged = [...newLocalProds, ...cloudProds];
+
             try {
-              localStorage.setItem('mr_tiles_cached_catalog_v2', JSON.stringify(merged));
+              localStorage.setItem('mr_tiles_cached_catalog_v4', JSON.stringify(merged));
             } catch (e) {}
             return merged;
           });
@@ -86,13 +82,12 @@ export default function App() {
 
   useEffect(() => {
     fetchLiveCloudProducts();
-    const timer = setInterval(fetchLiveCloudProducts, 12000);
+    const timer = setInterval(fetchLiveCloudProducts, 6000);
     return () => clearInterval(timer);
   }, []);
 
-  // Save Products to State, Local Storage & Global Cloud DB
+  // Save Products to State, Local Storage & Server API
   const saveProductsList = async (updatedList) => {
-    // Ensure all items have valid units and images
     const sanitizedList = updatedList.map(p => ({
       ...p,
       unit: p.unit || 'sq.ft',
@@ -100,22 +95,16 @@ export default function App() {
     }));
 
     setAllProducts(sanitizedList);
+
     try {
-      localStorage.setItem('mr_tiles_cached_catalog_v2', JSON.stringify(sanitizedList));
+      localStorage.setItem('mr_tiles_cached_catalog_v4', JSON.stringify(sanitizedList));
     } catch (e) {}
 
     try {
-      await fetch(LIVE_CLOUD_API_URL, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: 'mr_tiles_catalog',
-          data: {
-            products: sanitizedList
-          }
-        })
+      await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sanitizedList)
       });
     } catch (err) {}
   };
@@ -229,7 +218,7 @@ export default function App() {
     await saveProductsList(updatedList);
   };
 
-  // Admin Add Product (Guaranteed Persistence)
+  // Admin Add Product
   const handleAddProduct = async (productData) => {
     const newProd = {
       id: 'prod_' + Date.now(),

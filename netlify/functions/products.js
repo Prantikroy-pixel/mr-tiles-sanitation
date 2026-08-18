@@ -1,0 +1,172 @@
+// Netlify Serverless Cloud API Function for M R Tiles & Sanitation
+let memoryCatalog = [
+  {
+    "id": "prod_1",
+    "name": "Regal White Marble",
+    "category": "floor-tiles",
+    "categoryLabel": "Floor Tiles",
+    "price": 70,
+    "unit": "sq.ft",
+    "stock": 1800,
+    "minStock": 100,
+    "dimensions": "2x4 ft (600x1200 mm)",
+    "finish": "High Gloss Polished",
+    "material": "Vitrified Porcelain",
+    "image": "images/regal-white-marble.png",
+    "description": "Luxurious white marble finish vitrified tiles with elegant gold and subtle grey veining.",
+    "colors": [
+      { "name": "Carrara White", "hex": "#ffffff" },
+      { "name": "Calacatta Gold", "hex": "#fef3c7" },
+      { "name": "Statuario Grey", "hex": "#cbd5e1" }
+    ]
+  },
+  {
+    "id": "prod_2",
+    "name": "Moroccan Grey",
+    "category": "floor-tiles",
+    "categoryLabel": "Floor Tiles",
+    "price": 55,
+    "unit": "sq.ft",
+    "stock": 850,
+    "minStock": 100,
+    "dimensions": "2x2 ft (600x600 mm)",
+    "finish": "Satin Matt Anti-Skid",
+    "material": "Glazed Vitrified",
+    "image": "images/moroccan-grey.png",
+    "description": "Contemporary grey porcelain floor tile with subtle tactile pattern. Anti-skid and durable.",
+    "colors": [
+      { "name": "Slate Grey", "hex": "#64748b" },
+      { "name": "Charcoal Black", "hex": "#1e293b" },
+      { "name": "Beige Matt", "hex": "#e2e8f0" }
+    ]
+  },
+  {
+    "id": "prod_3",
+    "name": "Wall Hung Basin",
+    "category": "sanitary",
+    "categoryLabel": "Sanitary",
+    "price": 4850,
+    "unit": "piece",
+    "stock": 24,
+    "minStock": 5,
+    "dimensions": "450 x 350 x 130 mm",
+    "finish": "Glossy Ceramic White",
+    "material": "Vitreous China Ceramic",
+    "image": "images/wall-hung-basin.png",
+    "description": "Minimalist wall-mounted wash basin with integrated tap hole and overflow ring.",
+    "colors": [
+      { "name": "Pure White", "hex": "#ffffff" },
+      { "name": "Matte Black", "hex": "#0f172a" }
+    ]
+  },
+  {
+    "id": "prod_4",
+    "name": "Smart Commode",
+    "category": "sanitary",
+    "categoryLabel": "Sanitary",
+    "price": 6950,
+    "unit": "piece",
+    "stock": 12,
+    "minStock": 3,
+    "dimensions": "680 x 390 x 750 mm",
+    "finish": "Antibacterial Glaze",
+    "material": "Dual Flush Ceramic",
+    "image": "images/smart-commode.png",
+    "description": "Premium dual-flush rimless smart commode with soft-close seat lid.",
+    "colors": [
+      { "name": "Gloss White", "hex": "#ffffff" },
+      { "name": "Pearl Ivory", "hex": "#fef3c7" }
+    ]
+  },
+  {
+    "id": "prod_5",
+    "name": "Onyx Gold Wall Tile",
+    "category": "wall-tiles",
+    "categoryLabel": "Wall Tiles",
+    "price": 72,
+    "unit": "sq.ft",
+    "stock": 600,
+    "minStock": 80,
+    "dimensions": "1x2 ft (300x600 mm)",
+    "finish": "High Gloss Mirror Finish",
+    "material": "Ceramic Wall Tile",
+    "image": "images/regal-white-marble.png",
+    "description": "Rich onyx crystal pattern wall tile designed for luxury bathroom accent walls.",
+    "colors": [
+      { "name": "Crystal Gold", "hex": "#fde047" },
+      { "name": "Emerald Onyx", "hex": "#a7f3d0" },
+      { "name": "Ocean Blue", "hex": "#bae6fd" }
+    ]
+  },
+  {
+    "id": "prod_6",
+    "name": "Luxury Teak Finish Designer Door",
+    "category": "doors",
+    "categoryLabel": "Doors",
+    "price": 8500,
+    "unit": "piece",
+    "stock": 15,
+    "minStock": 3,
+    "dimensions": "7x3 ft (84x36 in)",
+    "finish": "Waterproof WPC Teak Finish",
+    "material": "Wood Polymer Composite",
+    "image": "images/moroccan-grey.png",
+    "description": "Termite proof, 100% waterproof heavy duty WPC designer entry door.",
+    "colors": [
+      { "name": "Burma Teak", "hex": "#78350f" },
+      { "name": "Walnut Dark", "hex": "#451a03" },
+      { "name": "Classic Oak", "hex": "#92400e" }
+    ]
+  }
+];
+
+export async function handler(event, context) {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Content-Type': 'application/json'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
+  }
+
+  if (event.httpMethod === 'GET') {
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ success: true, products: memoryCatalog })
+    };
+  }
+
+  if (event.httpMethod === 'POST' || event.httpMethod === 'PUT') {
+    try {
+      const body = JSON.parse(event.body);
+      if (Array.isArray(body)) {
+        memoryCatalog = body;
+      } else if (body.products && Array.isArray(body.products)) {
+        memoryCatalog = body.products;
+      } else if (body.name && body.price) {
+        memoryCatalog.unshift({ id: 'prod_' + Date.now(), ...body });
+      }
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ success: true, products: memoryCatalog })
+      };
+    } catch (e) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ success: false, message: 'Invalid JSON payload' })
+      };
+    }
+  }
+
+  return {
+    statusCode: 200,
+    headers,
+    body: JSON.stringify({ success: true, products: memoryCatalog })
+  };
+}
