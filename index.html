@@ -541,13 +541,30 @@
         const [showAddCatModal, setShowAddCatModal] = useState(false);
         const [newCatLabel, setNewCatLabel] = useState('');
 
-        // Handle Direct Device Image Upload
+        // Handle Direct Device Image Upload with Canvas Compression
         const handleImageFileUpload = (e) => {
           const file = e.target.files[0];
-          if (file) {
+          if (file && file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = (uploadEvent) => {
-              setNewImage(uploadEvent.target.result); // Base64 Data URL
+              const img = new Image();
+              img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const maxWidth = 800;
+                if (width > maxWidth) {
+                  height = Math.round((height * maxWidth) / width);
+                  width = maxWidth;
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                setNewImage(canvas.toDataURL('image/jpeg', 0.75));
+              };
+              img.onerror = () => setNewImage(uploadEvent.target.result);
+              img.src = uploadEvent.target.result;
             };
             reader.readAsDataURL(file);
           }

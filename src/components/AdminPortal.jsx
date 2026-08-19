@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Edit2, Trash2, Check, X, AlertTriangle, Download, Upload } from 'lucide-react';
+import { compressImageFile } from '../utils/imageCompressor.js';
 
 export default function AdminPortal({ 
   products, 
@@ -33,20 +34,25 @@ export default function AdminPortal({
   const [newFinish, setNewFinish] = useState('High Gloss Polished');
   const [newImage, setNewImage] = useState('images/regal-white-marble.png');
   const [newDescription, setNewDescription] = useState('');
+  const [isCompressing, setIsCompressing] = useState(false);
 
   // Add Category Modal State
   const [showAddCatModal, setShowAddCatModal] = useState(false);
   const [newCatLabel, setNewCatLabel] = useState('');
 
-  // Handle Direct Device Image Upload
-  const handleImageFileUpload = (e) => {
+  // Handle Direct Device Image Upload with Automatic Canvas Compression
+  const handleImageFileUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        setNewImage(uploadEvent.target.result); // Base64 data URL from local device!
-      };
-      reader.readAsDataURL(file);
+      setIsCompressing(true);
+      try {
+        const compressedBase64 = await compressImageFile(file, 800, 0.75);
+        setNewImage(compressedBase64);
+      } catch (err) {
+        setNewImage('images/regal-white-marble.png');
+      } finally {
+        setIsCompressing(false);
+      }
     }
   };
 
@@ -121,11 +127,7 @@ export default function AdminPortal({
       dimensions: newDimensions || 'Standard',
       finish: newFinish || 'High Gloss',
       image: newImage || 'images/regal-white-marble.png',
-      description: newDescription || 'Premium quality product from M R Tiles & Sanitation.',
-      colors: [
-        { name: "Standard White", hex: "#ffffff" },
-        { name: "Grey Finish", hex: "#cbd5e1" }
-      ]
+      description: newDescription || 'Premium quality product from M R Tiles & Sanitation.'
     });
 
     setShowAddModal(false);
@@ -352,7 +354,7 @@ export default function AdminPortal({
                 </select>
               </div>
 
-              {/* Direct Device Image File Picker */}
+              {/* Direct Device Image File Picker with Canvas Compressor */}
               <div style={{ marginBottom: '0.85rem' }}>
                 <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.25rem' }}>Upload Product Photo from Device *</label>
                 <div style={{ border: '2px dashed #cbd5e1', borderRadius: '8px', padding: '0.75rem', textAlign: 'center', background: '#f8fafc' }}>
@@ -364,7 +366,7 @@ export default function AdminPortal({
                     style={{ display: 'none' }}
                   />
                   <label htmlFor="device-photo-input" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#0f172a', fontWeight: 'bold', fontSize: '0.85rem' }}>
-                    <Upload size={16} /> Select Photo from Device
+                    <Upload size={16} /> {isCompressing ? 'Optimizing Photo...' : 'Select Photo from Device'}
                   </label>
                   {newImage && (
                     <div style={{ marginTop: '0.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
@@ -414,8 +416,8 @@ export default function AdminPortal({
                 </div>
               </div>
 
-              <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.65rem' }}>
-                <Plus size={16} /> Add Product to Inventory
+              <button type="submit" disabled={isCompressing} className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.65rem' }}>
+                <Plus size={16} /> {isCompressing ? 'Processing Photo...' : 'Add Product to Inventory'}
               </button>
             </form>
           </div>
