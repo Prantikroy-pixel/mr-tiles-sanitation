@@ -10,8 +10,6 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-const KVDB_URL = 'https://kvdb.io/MJ63pjJ2UwFiptKvbpy9N7/products';
-
 // Global CORS Middleware for Cross-Domain Device Sync
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -34,7 +32,7 @@ app.use('/images', express.static(path.join(__dirname, 'images')));
 // Path to local data file
 const DATA_FILE = path.join(__dirname, 'data', 'products.json');
 
-// Helper to read products
+// Helper to read products from disk
 function getProducts() {
   try {
     if (fs.existsSync(DATA_FILE)) {
@@ -48,7 +46,7 @@ function getProducts() {
   return [];
 }
 
-// Helper to save products
+// Helper to save products to disk
 function saveProducts(products) {
   try {
     const dir = path.dirname(DATA_FILE);
@@ -56,34 +54,11 @@ function saveProducts(products) {
       fs.mkdirSync(dir, { recursive: true });
     }
     fs.writeFileSync(DATA_FILE, JSON.stringify(products, null, 2), 'utf-8');
-
-    // Async sync to cloud database so data survives server restarts forever
-    fetch(KVDB_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(products)
-    }).catch(() => {});
-
     return true;
   } catch (err) {
     return false;
   }
 }
-
-// Populate from cloud database on startup if server restarted
-(async () => {
-  try {
-    const res = await fetch(KVDB_URL);
-    if (res.ok) {
-      const cloudData = await res.json();
-      if (Array.isArray(cloudData) && cloudData.length > 0) {
-        const dir = path.dirname(DATA_FILE);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(DATA_FILE, JSON.stringify(cloudData, null, 2), 'utf-8');
-      }
-    }
-  } catch(e) {}
-})();
 
 // Admin Auth Endpoint
 app.post('/api/admin/login', (req, res) => {
@@ -102,23 +77,8 @@ app.post('/api/admin/login', (req, res) => {
 });
 
 // Public: Get Catalog Products
-app.get('/api/products', async (req, res) => {
+app.get('/api/products', (req, res) => {
   let products = getProducts();
-
-  // If local file is empty or container restarted, fetch from persistent cloud DB
-  if (!products || products.length === 0) {
-    try {
-      const cloudRes = await fetch(KVDB_URL);
-      if (cloudRes.ok) {
-        const cloudData = await cloudRes.json();
-        if (Array.isArray(cloudData) && cloudData.length > 0) {
-          products = cloudData;
-          saveProducts(products);
-        }
-      }
-    } catch(e) {}
-  }
-
   const { category, search } = req.query;
 
   if (category && category !== 'all') {
@@ -137,18 +97,45 @@ app.get('/api/products', async (req, res) => {
   res.json({ success: true, count: products.length, products });
 });
 
-// Public/Admin Update Product Catalog
+// Public/Admin Update Product Catalog with Server-Side Union Merge (Prevents accidental data wipes)
 app.post('/api/products', (req, res) => {
   let currentProducts = getProducts();
-  
-  if (Array.isArray(req.body)) {
-    saveProducts(req.body);
-    return res.json({ success: true, products: req.body });
+  let incoming = req.body;
+
+  if (incoming && incoming.products && Array.isArray(incoming.products)) {
+    incoming = incoming.products;
   }
 
-  if (req.body && req.body.products && Array.isArray(req.body.products)) {
-    saveProducts(req.body.products);
-    return res.json({ success: true, products: req.body.products });
+  if (Array.isArray(incoming)) {
+    const productMap = new Map();
+
+    // 1. Load existing server items first
+    currentProducts.forEach(p => {
+      if (p && p.id) {
+        productMap.set(p.id, {
+          ...p,
+          unit: p.unit || 'sq.ft',
+          image: p.image || 'images/regal-white-marble.png'
+        });
+      }
+    });
+
+    // 2. Union merge incoming items by ID
+    incoming.forEach(p => {
+      if (p && p.id) {
+        const existing = productMap.get(p.id) || {};
+        productMap.set(p.id, {
+          ...existing,
+          ...p,
+          unit: p.unit || existing.unit || 'sq.ft',
+          image: p.image || existing.image || 'images/regal-white-marble.png'
+        });
+      }
+    });
+
+    const mergedList = Array.from(productMap.values());
+    saveProducts(mergedList);
+    return res.json({ success: true, products: mergedList });
   }
 
   if (req.body && req.body.name) {
@@ -167,15 +154,32 @@ app.post('/api/products', (req, res) => {
 });
 
 app.put('/api/products', (req, res) => {
-  if (Array.isArray(req.body)) {
-    saveProducts(req.body);
-    return res.json({ success: true, products: req.body });
+  let currentProducts = getProducts();
+  let incoming = req.body;
+
+  if (incoming && incoming.products && Array.isArray(incoming.products)) {
+    incoming = incoming.products;
   }
-  if (req.body && req.body.products && Array.isArray(req.body.products)) {
-    saveProducts(req.body.products);
-    return res.json({ success: true, products: req.body.products });
+
+  if (Array.isArray(incoming)) {
+    const productMap = new Map();
+    currentProducts.forEach(p => { if (p && p.id) productMap.set(p.id, p); });
+    incoming.forEach(p => { if (p && p.id) productMap.set(p.id, { ...productMap.get(p.id), ...p }); });
+    const mergedList = Array.from(productMap.values());
+    saveProducts(mergedList);
+    return res.json({ success: true, products: mergedList });
   }
+
   res.json({ success: true });
+});
+
+// Explicit Item Delete Route
+app.delete('/api/products/:id', (req, res) => {
+  const { id } = req.params;
+  let currentProducts = getProducts();
+  const updatedList = currentProducts.filter(p => p.id !== id);
+  saveProducts(updatedList);
+  res.json({ success: true, products: updatedList });
 });
 
 app.get('*', (req, res) => {
