@@ -32,13 +32,21 @@ app.use('/images', express.static(path.join(__dirname, 'images')));
 // Path to local data file
 const DATA_FILE = path.join(__dirname, 'data', 'products.json');
 
-// Helper to read products from disk
+// In-Memory Master Cache for 100% Instant Persistence
+let inMemoryCatalog = null;
+
+// Helper to read products from disk or memory
 function getProducts() {
+  if (inMemoryCatalog && Array.isArray(inMemoryCatalog) && inMemoryCatalog.length > 0) {
+    return inMemoryCatalog;
+  }
+
   try {
     if (fs.existsSync(DATA_FILE)) {
       const content = fs.readFileSync(DATA_FILE, 'utf-8');
       const parsed = JSON.parse(content);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        inMemoryCatalog = parsed;
         return parsed;
       }
     }
@@ -46,9 +54,10 @@ function getProducts() {
   return [];
 }
 
-// Helper to save products to disk
+// Helper to save products to memory and disk
 function saveProducts(products) {
   try {
+    inMemoryCatalog = products;
     const dir = path.dirname(DATA_FILE);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
@@ -97,7 +106,7 @@ app.get('/api/products', (req, res) => {
   res.json({ success: true, count: products.length, products });
 });
 
-// Public/Admin Update Product Catalog with Server-Side Union Merge (Prevents accidental data wipes)
+// Public/Admin Update Product Catalog with Server-Side Union Merge
 app.post('/api/products', (req, res) => {
   let currentProducts = getProducts();
   let incoming = req.body;
