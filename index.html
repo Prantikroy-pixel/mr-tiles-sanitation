@@ -429,23 +429,55 @@
         const [inquireNote, setInquireNote] = useState('');
         const [showInquireModal, setShowInquireModal] = useState(false);
 
-        // Fetch Cloud Database and merge safely
+        // Self-Healing Smart Merge Fetch Logic
         const fetchCloudProducts = async () => {
           try {
             const res = await fetch(LIVE_CLOUD_API_URL);
             if (res.ok) {
               const result = await res.json();
-              const prodList = result.products || (Array.isArray(result) ? result : null);
-              if (prodList && Array.isArray(prodList) && prodList.length > 0) {
-                const sanitized = prodList.map(p => ({
-                  ...p,
-                  unit: p.unit || 'sq.ft',
-                  image: p.image || 'images/regal-white-marble.png'
-                }));
-                setProducts(sanitized);
+              const cloudProdList = result.products || (Array.isArray(result) ? result : null);
+              if (cloudProdList && Array.isArray(cloudProdList)) {
+                let localProdList = [];
                 try {
-                  localStorage.setItem('mr_tiles_local_v5', JSON.stringify(sanitized));
-                } catch(e) {}
+                  const cached = localStorage.getItem('mr_tiles_permanent_catalog_v10');
+                  if (cached) localProdList = JSON.parse(cached);
+                } catch (e) {}
+
+                const mergedMap = new Map();
+                cloudProdList.forEach(p => {
+                  if (p && p.id) {
+                    mergedMap.set(p.id, {
+                      ...p,
+                      unit: p.unit || 'sq.ft',
+                      image: p.image || 'images/regal-white-marble.png'
+                    });
+                  }
+                });
+
+                let missingInCloud = false;
+                localProdList.forEach(p => {
+                  if (p && p.id && !mergedMap.has(p.id)) {
+                    mergedMap.set(p.id, p);
+                    missingInCloud = true;
+                  }
+                });
+
+                const finalMergedList = Array.from(mergedMap.values());
+
+                if (finalMergedList.length > 0) {
+                  setProducts(finalMergedList);
+                  try {
+                    localStorage.setItem('mr_tiles_permanent_catalog_v10', JSON.stringify(finalMergedList));
+                  } catch (e) {}
+
+                  if (missingInCloud || finalMergedList.length > cloudProdList.length) {
+                    fetch(LIVE_CLOUD_API_URL, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(finalMergedList)
+                    }).catch(() => {});
+                  }
+                }
               }
             }
           } catch (err) {}

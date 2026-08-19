@@ -12,10 +12,10 @@ const LIVE_RENDER_API_URL = 'https://mr-tiles-sanitation.onrender.com/api/produc
 export default function App() {
   const [currentView, setCurrentView] = useState('store');
   
-  // Safe Product State Loader
+  // Safe Product State Loader with Permanent Local Fallback
   const [allProducts, setAllProducts] = useState(() => {
     try {
-      const saved = localStorage.getItem('mr_tiles_cached_catalog_v5');
+      const saved = localStorage.getItem('mr_tiles_permanent_catalog_v10');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -29,7 +29,7 @@ export default function App() {
   // Category State Loader
   const [categories, setCategories] = useState(() => {
     try {
-      const savedCats = localStorage.getItem('mr_tiles_custom_categories_v2');
+      const savedCats = localStorage.getItem('mr_tiles_custom_categories_v10');
       if (savedCats) {
         const parsed = JSON.parse(savedCats);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -62,7 +62,7 @@ export default function App() {
   const [inquireNote, setInquireNote] = useState('');
   const [showInquireModal, setShowInquireModal] = useState(false);
 
-  // Fetch Live Products from Central Render Server Database
+  // Self-Healing Smart Merge Fetch Logic
   const fetchLiveCloudProducts = async () => {
     try {
       const targetUrl = window.location.hostname.includes('onrender.com') 
@@ -72,20 +72,56 @@ export default function App() {
       const res = await fetch(targetUrl);
       if (res.ok) {
         const result = await res.json();
-        const prodList = result.products || (Array.isArray(result) ? result : null);
+        const cloudProdList = result.products || (Array.isArray(result) ? result : null);
 
-        if (prodList && Array.isArray(prodList) && prodList.length > 0) {
-          const sanitizedList = prodList.map(p => ({
-            ...p,
-            unit: p.unit || 'sq.ft',
-            image: p.image || 'images/regal-white-marble.png'
-          }));
-
-          setAllProducts(sanitizedList);
-
+        if (cloudProdList && Array.isArray(cloudProdList)) {
+          // Read local cache
+          let localProdList = [];
           try {
-            localStorage.setItem('mr_tiles_cached_catalog_v5', JSON.stringify(sanitizedList));
+            const cached = localStorage.getItem('mr_tiles_permanent_catalog_v10');
+            if (cached) localProdList = JSON.parse(cached);
           } catch (e) {}
+
+          // Smart Merge by ID to guarantee NO ITEM IS EVER LOST
+          const mergedMap = new Map();
+          
+          // First add all cloud products
+          cloudProdList.forEach(p => {
+            if (p && p.id) {
+              mergedMap.set(p.id, {
+                ...p,
+                unit: p.unit || 'sq.ft',
+                image: p.image || 'images/regal-white-marble.png'
+              });
+            }
+          });
+
+          // Then add any local products that cloud might have missed during server restart
+          let missingInCloud = false;
+          localProdList.forEach(p => {
+            if (p && p.id && !mergedMap.has(p.id)) {
+              mergedMap.set(p.id, p);
+              missingInCloud = true;
+            }
+          });
+
+          const finalMergedList = Array.from(mergedMap.values());
+
+          if (finalMergedList.length > 0) {
+            setAllProducts(finalMergedList);
+            try {
+              localStorage.setItem('mr_tiles_permanent_catalog_v10', JSON.stringify(finalMergedList));
+            } catch (e) {}
+
+            // If Render server lost items during restart, automatically heal Render server
+            if (missingInCloud || finalMergedList.length > cloudProdList.length) {
+              fetch(targetUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(finalMergedList)
+              }).catch(() => {});
+            }
+          }
         }
       }
     } catch (err) {}
@@ -118,7 +154,7 @@ export default function App() {
         const updated = [...categories, ...newFoundCats];
         setCategories(updated);
         try {
-          localStorage.setItem('mr_tiles_custom_categories_v2', JSON.stringify(updated));
+          localStorage.setItem('mr_tiles_custom_categories_v10', JSON.stringify(updated));
         } catch (e) {}
       }
     }
@@ -135,7 +171,7 @@ export default function App() {
     setAllProducts(sanitizedList);
 
     try {
-      localStorage.setItem('mr_tiles_cached_catalog_v5', JSON.stringify(sanitizedList));
+      localStorage.setItem('mr_tiles_permanent_catalog_v10', JSON.stringify(sanitizedList));
     } catch (e) {}
 
     const targetUrl = window.location.hostname.includes('onrender.com') 
@@ -172,7 +208,7 @@ export default function App() {
     setCategories(updatedCats);
     setActiveCategory(newCat.id);
     try {
-      localStorage.setItem('mr_tiles_custom_categories_v2', JSON.stringify(updatedCats));
+      localStorage.setItem('mr_tiles_custom_categories_v10', JSON.stringify(updatedCats));
     } catch (e) {}
   };
 
@@ -189,7 +225,6 @@ export default function App() {
         <td style="padding: 10px; font-weight: bold;">${p.name}</td>
         <td style="padding: 10px;">${p.categoryLabel || p.category}</td>
         <td style="padding: 10px;">${p.dimensions}</td>
-        <td style="padding: 10px;">${p.colors ? p.colors.map(c => c.name).join(', ') : 'Standard'}</td>
         <td style="padding: 10px; font-weight: bold; color: #0f172a;">₹${p.price}/${p.unit || 'sq.ft'}</td>
       </tr>
     `).join('');
@@ -218,7 +253,6 @@ export default function App() {
                 <th>Product Item</th>
                 <th>Category Section</th>
                 <th>Dimensions</th>
-                <th>Color Choices</th>
                 <th>Price</th>
               </tr>
             </thead>
