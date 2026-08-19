@@ -10,6 +10,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+const KVDB_URL = 'https://kvdb.io/MJ63pjJ2UwFiptKvbpy9N7/products';
+
 // Global CORS Middleware for Cross-Domain Device Sync
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -29,7 +31,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'dist')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
-// Path to persistent data store
+// Path to local data file
 const DATA_FILE = path.join(__dirname, 'data', 'products.json');
 
 // Helper to read products
@@ -42,9 +44,7 @@ function getProducts() {
         return parsed;
       }
     }
-  } catch (err) {
-    console.error('Error reading products file:', err);
-  }
+  } catch (err) {}
   return [];
 }
 
@@ -56,35 +56,69 @@ function saveProducts(products) {
       fs.mkdirSync(dir, { recursive: true });
     }
     fs.writeFileSync(DATA_FILE, JSON.stringify(products, null, 2), 'utf-8');
+
+    // Async sync to cloud database so data survives server restarts forever
+    fetch(KVDB_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(products)
+    }).catch(() => {});
+
     return true;
   } catch (err) {
-    console.error('Error saving products file:', err);
     return false;
   }
 }
 
-// Admin Login Route (Credentials: Admin11 / Admin1234)
-app.post('/api/admin/login', (req, res) => {
-  const { username, password } = req.body || {};
+// Populate from cloud database on startup if server restarted
+(async () => {
+  try {
+    const res = await fetch(KVDB_URL);
+    if (res.ok) {
+      const cloudData = await res.json();
+      if (Array.isArray(cloudData) && cloudData.length > 0) {
+        const dir = path.dirname(DATA_FILE);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(DATA_FILE, JSON.stringify(cloudData, null, 2), 'utf-8');
+      }
+    }
+  } catch(e) {}
+})();
 
+// Admin Auth Endpoint
+app.post('/api/admin/login', (req, res) => {
+  const { username, password } = req.body;
   if (username === 'Admin11' && password === 'Admin1234') {
-    const token = 'mr_admin_token_' + Date.now();
     return res.json({
       success: true,
-      token,
-      message: 'Login successful'
+      token: 'mr_admin_token_' + Date.now(),
+      message: 'Authentication successful'
     });
   }
-
-  return res.status(401).json({
+  res.status(401).json({
     success: false,
     message: 'Invalid credentials'
   });
 });
 
 // Public: Get Catalog Products
-app.get('/api/products', (req, res) => {
+app.get('/api/products', async (req, res) => {
   let products = getProducts();
+
+  // If local file is empty or container restarted, fetch from persistent cloud DB
+  if (!products || products.length === 0) {
+    try {
+      const cloudRes = await fetch(KVDB_URL);
+      if (cloudRes.ok) {
+        const cloudData = await cloudRes.json();
+        if (Array.isArray(cloudData) && cloudData.length > 0) {
+          products = cloudData;
+          saveProducts(products);
+        }
+      }
+    } catch(e) {}
+  }
+
   const { category, search } = req.query;
 
   if (category && category !== 'all') {
@@ -103,7 +137,7 @@ app.get('/api/products', (req, res) => {
   res.json({ success: true, count: products.length, products });
 });
 
-// Public/Admin Update Product Catalog (Accepts Array or Single Product Object)
+// Public/Admin Update Product Catalog
 app.post('/api/products', (req, res) => {
   let currentProducts = getProducts();
   
@@ -141,12 +175,15 @@ app.put('/api/products', (req, res) => {
     saveProducts(req.body.products);
     return res.json({ success: true, products: req.body.products });
   }
-  res.json({ success: true, products: getProducts() });
+  res.json({ success: true });
 });
 
-// Serve Single Page Application Fallback
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  if (fs.existsSync(path.join(__dirname, 'dist', 'index.html'))) {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  } else {
+    res.sendFile(path.join(__dirname, 'index.html'));
+  }
 });
 
 app.listen(PORT, () => {

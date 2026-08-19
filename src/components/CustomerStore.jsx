@@ -119,7 +119,7 @@ export default function CustomerStore({
                       </button>
                       <button 
                         className="btn-sm-inquire"
-                        onClick={() => onInquire(prod, activeColorName ? `Selected Color: ${activeColorName}` : '')}
+                        onClick={() => onInquire(prod, `Inquiry for ${prod.name}`)}
                       >
                         Request Quote
                       </button>

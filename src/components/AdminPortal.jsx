@@ -56,23 +56,27 @@ export default function AdminPortal({
     }
   };
 
-  // Export Leads to CSV
+  // Export Leads & Stock to CSV / Excel
   const exportLeadsCsv = () => {
-    const dummyLeads = [
-      { id: '1', name: 'Rahul Roy', phone: '+91 98765 43210', interest: 'Regal White Marble', note: 'Calculated 330 sq.ft (21 boxes) for 15x20 ft room', date: new Date().toLocaleDateString() },
-      { id: '2', name: 'Amitabh Sen', phone: '+91 94350 12345', interest: 'Smart Commode', note: 'Inquired wholesale price for 4 units', date: new Date().toLocaleDateString() },
-      { id: '3', name: 'Priya Das', phone: '+91 87620 99881', interest: 'Teak Designer Door', note: 'Requested 3 doors for house renovation', date: new Date().toLocaleDateString() }
+    const csvHeaders = ['Type', 'Item / Customer Name', 'Details / Calculations / Phone', 'Price / Stock', 'Date'];
+    const csvRows = [
+      ['Customer Inquiry Lead', 'Rahul Roy', 'Calculated 330 sq.ft (21 boxes) for 15x20 ft room | Phone: +91 98765 43210', '₹70/sq.ft', new Date().toLocaleDateString()],
+      ['Customer Inquiry Lead', 'Amitabh Sen', 'Inquired wholesale price for 4 Smart Commodes | Phone: +91 94350 12345', '₹6,950/piece', new Date().toLocaleDateString()],
+      ...products.map(p => [
+        'Inventory Stock Item',
+        `"${p.name}"`,
+        `"${p.dimensions} - ${p.finish} (${p.categoryLabel || p.category})"`,
+        `"₹${p.price}/${p.unit || 'sq.ft'} (Stock: ${p.stock})"`,
+        new Date().toLocaleDateString()
+      ])
     ];
 
-    const csvHeaders = ['ID', 'Customer Name', 'Phone Number', 'Product Interest', 'Calculations / Notes', 'Inquiry Date'];
-    const csvRows = dummyLeads.map(l => [l.id, `"${l.name}"`, `"${l.phone}"`, `"${l.interest}"`, `"${l.note}"`, `"${l.date}"`]);
     const csvContent = [csvHeaders.join(','), ...csvRows.map(r => r.join(','))].join('\n');
-
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `mr_tiles_leads_${Date.now()}.csv`);
+    link.setAttribute('download', `mr_tiles_leads_and_stock_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

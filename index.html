@@ -60,8 +60,8 @@
 
       .btn-primary { background: #0f172a; color: #ffffff; padding: 0.65rem 1.25rem; border-radius: 6px; font-size: 0.88rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; }
       .btn-primary:hover { background: #334155; }
-      .btn-whatsapp { background: #16a34a; color: #ffffff; padding: 0.65rem 1.25rem; border-radius: 6px; font-size: 0.88rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; }
-      .btn-whatsapp:hover { background: #15803d; }
+      .btn-whatsapp { background: #16a34a; color: #ffffff; padding: 0.65rem 1.25rem; border-radius: 6px; font-size: 0.88rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; }
+      .btn-whatsapp:hover { background: #15803d; color: #ffffff; }
       .btn-secondary { background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 0.65rem 1.25rem; border-radius: 6px; font-size: 0.88rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; }
       .btn-secondary:hover { background: #f8fafc; }
 
@@ -87,11 +87,6 @@
       .card-body { padding: 1rem; display: flex; flex-direction: column; flex: 1; background: #ffffff; }
       .card-title { font-size: 1.05rem; margin-bottom: 0.2rem; color: #0f172a; }
       .card-specs { font-size: 0.78rem; color: #64748b; margin-bottom: 0.5rem; }
-      
-      .color-selector { display: flex; gap: 0.3rem; margin-bottom: 0.75rem; align-items: center; }
-      .color-chip { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #ffffff; outline: 1px solid #cbd5e1; cursor: pointer; transition: transform 0.15s ease; }
-      .color-chip.active { outline: 2px solid #0f172a; transform: scale(1.15); }
-      .color-label { font-size: 0.72rem; color: #64748b; margin-left: 0.25rem; font-weight: 600; }
 
       .card-price-row { display: flex; align-items: baseline; justify-content: space-between; margin-top: auto; padding-top: 0.6rem; border-top: 1px solid #e2e8f0; }
       .price-main { font-size: 1.2rem; font-weight: 700; color: #0f172a; }
@@ -104,7 +99,7 @@
 
       .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(2px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
       .modal-content { width: 100%; max-width: 500px; background: #ffffff; border-radius: 8px; padding: 1.5rem; position: relative; max-height: 90vh; overflow-y: auto; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-      .modal-close { position: absolute; top: 0.85rem; right: 0.85rem; background: #f8fafc; color: #64748b; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; }
+      .modal-close { position: absolute; top: 0.85rem; right: 0.85rem; background: #f8fafc; color: #64748b; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; font-weight: bold; cursor: pointer; }
 
       .admin-container { max-width: 1200px; margin: 1.5rem auto; padding: 0 1.5rem; background: #ffffff; }
       .admin-table-wrap { background: #ffffff; border-radius: 8px; overflow-x: auto; border: 1px solid #e2e8f0; }
@@ -169,12 +164,7 @@
           finish: "High Gloss Polished",
           material: "Vitrified Porcelain",
           image: "images/regal-white-marble.png",
-          description: "Luxurious white marble finish vitrified tiles with elegant gold and subtle grey veining.",
-          colors: [
-            { name: "Carrara White", hex: "#ffffff" },
-            { name: "Calacatta Gold", hex: "#fef3c7" },
-            { name: "Statuario Grey", hex: "#cbd5e1" }
-          ]
+          description: "Luxurious white marble finish vitrified tiles with elegant gold and subtle grey veining."
         },
         {
           id: "prod_2",
@@ -189,12 +179,7 @@
           finish: "Satin Matt Anti-Skid",
           material: "Glazed Vitrified",
           image: "images/moroccan-grey.png",
-          description: "Contemporary grey porcelain floor tile with subtle tactile pattern. Anti-skid and durable.",
-          colors: [
-            { name: "Slate Grey", hex: "#64748b" },
-            { name: "Charcoal Black", hex: "#1e293b" },
-            { name: "Beige Matt", hex: "#e2e8f0" }
-          ]
+          description: "Contemporary grey porcelain floor tile with subtle tactile pattern. Anti-skid and durable."
         },
         {
           id: "prod_3",
@@ -209,11 +194,7 @@
           finish: "Glossy Ceramic White",
           material: "Vitreous China Ceramic",
           image: "images/wall-hung-basin.png",
-          description: "Minimalist wall-mounted wash basin with integrated tap hole and overflow ring.",
-          colors: [
-            { name: "Pure White", hex: "#ffffff" },
-            { name: "Matte Black", hex: "#0f172a" }
-          ]
+          description: "Minimalist wall-mounted wash basin with integrated tap hole and overflow ring."
         },
         {
           id: "prod_4",
@@ -228,11 +209,7 @@
           finish: "Antibacterial Glaze",
           material: "Dual Flush Ceramic",
           image: "images/smart-commode.png",
-          description: "Premium dual-flush rimless smart commode with soft-close seat lid.",
-          colors: [
-            { name: "Gloss White", hex: "#ffffff" },
-            { name: "Pearl Ivory", hex: "#fef3c7" }
-          ]
+          description: "Premium dual-flush rimless smart commode with soft-close seat lid."
         },
         {
           id: "prod_5",
@@ -247,12 +224,7 @@
           finish: "High Gloss Mirror Finish",
           material: "Ceramic Wall Tile",
           image: "images/regal-white-marble.png",
-          description: "Rich onyx crystal pattern wall tile designed for luxury bathroom accent walls.",
-          colors: [
-            { name: "Crystal Gold", hex: "#fde047" },
-            { name: "Emerald Onyx", hex: "#a7f3d0" },
-            { name: "Ocean Blue", hex: "#bae6fd" }
-          ]
+          description: "Rich onyx crystal pattern wall tile designed for luxury bathroom accent walls."
         },
         {
           id: "prod_6",
@@ -267,12 +239,7 @@
           finish: "Waterproof WPC Teak Finish",
           material: "Wood Polymer Composite",
           image: "images/moroccan-grey.png",
-          description: "Termite proof, 100% waterproof heavy duty WPC designer entry door.",
-          colors: [
-            { name: "Burma Teak", hex: "#78350f" },
-            { name: "Walnut Dark", hex: "#451a03" },
-            { name: "Classic Oak", hex: "#92400e" }
-          ]
+          description: "Termite proof, 100% waterproof heavy duty WPC designer entry door."
         }
       ];
 
@@ -307,6 +274,127 @@
               </div>
             </div>
           </header>
+        );
+      }
+
+      // Tile Calculator Modal Component
+      function TileCalculatorModal({ product, onClose, onInquire }) {
+        const [length, setLength] = useState(12);
+        const [width, setWidth] = useState(10);
+        const [wastagePercent, setWastagePercent] = useState(10);
+
+        const pricePerSqFt = product && product.unit === 'sq.ft' ? product.price : 70;
+        const netArea = Number(length || 0) * Number(width || 0);
+        const wastageArea = (netArea * Number(wastagePercent)) / 100;
+        const totalArea = Math.ceil(netArea + wastageArea);
+        
+        const sqFtPerBox = 16;
+        const boxesNeeded = Math.ceil(totalArea / sqFtPerBox);
+        const estimatedCost = totalArea * pricePerSqFt;
+
+        return (
+          <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+              <button className="modal-close" onClick={onClose}>✕</button>
+
+              <h3 style={{ fontSize: '1.2rem', color: '#0f172a', marginBottom: '0.2rem' }}>Tile & Budget Calculator</h3>
+              <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '1rem' }}>
+                {product ? `Calculating for: ${product.name} (₹${product.price}/sq.ft)` : 'Estimate room coverage & box requirement'}
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Length (Feet)</label>
+                  <input type="number" min="1" value={length} onChange={e => setLength(e.target.value)} style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Width (Feet)</label>
+                  <input type="number" min="1" value={width} onChange={e => setWidth(e.target.value)} style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px' }} />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Cutting & Wastage Margin</label>
+                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                  {[5, 10, 15].map(pct => (
+                    <button key={pct} type="button" onClick={() => setWastagePercent(pct)} style={{ flex: 1, padding: '0.4rem', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 'bold', background: wastagePercent === pct ? '#0f172a' : '#ffffff', color: wastagePercent === pct ? '#ffffff' : '#64748b', border: '1px solid #cbd5e1' }}>
+                      {pct}% Margin
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '1rem', border: '1px solid #e2e8f0', marginBottom: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.5rem' }}>
+                  <div><span style={{ fontSize: '0.72rem', color: '#64748b' }}>Net Area:</span><div style={{ fontWeight: 'bold', color: '#0f172a' }}>{netArea} sq.ft</div></div>
+                  <div><span style={{ fontSize: '0.72rem', color: '#64748b' }}>Total Required:</span><div style={{ fontWeight: 'bold', color: '#2563eb' }}>{totalArea} sq.ft</div></div>
+                  <div><span style={{ fontSize: '0.72rem', color: '#64748b' }}>Boxes Needed:</span><div style={{ fontWeight: 'bold', color: '#0f172a' }}>{boxesNeeded} Boxes</div></div>
+                  <div><span style={{ fontSize: '0.72rem', color: '#64748b' }}>Est. Cost:</span><div style={{ fontWeight: 'bold', color: '#16a34a', fontSize: '1.1rem' }}>₹{estimatedCost.toLocaleString('en-IN')}</div></div>
+                </div>
+              </div>
+
+              <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.65rem' }} onClick={() => { onClose(); if (onInquire) onInquire(product, `Calculated ${totalArea} sq.ft (${boxesNeeded} boxes) for ${length}x${width} ft room. Est: ₹${estimatedCost}`); }}>
+                Send Calculation to WhatsApp ➔
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      // WhatsApp Inquiry Modal Component
+      function InquiryModal({ product, initialNote, onClose }) {
+        const [name, setName] = useState('');
+        const [phone, setPhone] = useState('');
+        const [message, setMessage] = useState(initialNote || '');
+
+        const getWhatsAppLink = () => {
+          const storePhone = '916001399842';
+          const prodName = product ? product.name : 'Showroom Inquiry';
+          const prodPrice = product ? ` (₹${product.price}/${product.unit || 'sq.ft'})` : '';
+
+          let text = `Hello M R Tiles & Sanitation! 👋\n\n` +
+            `*Name*: ${name || 'Customer'}\n` +
+            `*Phone*: ${phone || 'N/A'}\n` +
+            `*Product*: ${prodName}${prodPrice}\n`;
+
+          if (message) text += `*Details/Calculation*: ${message}\n`;
+          text += `\nPlease share best price & availability!`;
+
+          return `https://wa.me/${storePhone}?text=${encodeURIComponent(text)}`;
+        };
+
+        return (
+          <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+              <button className="modal-close" onClick={onClose}>✕</button>
+
+              <h3 style={{ fontSize: '1.2rem', color: '#0f172a', marginBottom: '0.2rem' }}>Request Trade Quote</h3>
+              <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '1rem' }}>
+                {product ? `Inquiring for: ${product.name}` : 'Connect with Silchar sales desk'}
+              </p>
+
+              <form onSubmit={e => { e.preventDefault(); window.open(getWhatsAppLink(), '_blank'); onClose(); }}>
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Full Name *</label>
+                  <input type="text" required placeholder="e.g. Rahul Roy" value={name} onChange={e => setName(e.target.value)} style={{ width: '100%', padding: '0.55rem', border: '1px solid #cbd5e1', borderRadius: '6px' }} />
+                </div>
+
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Phone / WhatsApp *</label>
+                  <input type="tel" required placeholder="+91 98765 43210" value={phone} onChange={e => setPhone(e.target.value)} style={{ width: '100%', padding: '0.55rem', border: '1px solid #cbd5e1', borderRadius: '6px' }} />
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Details / Note</label>
+                  <textarea rows="3" placeholder="Quantity, calculations, delivery requirement..." value={message} onChange={e => setMessage(e.target.value)} style={{ width: '100%', padding: '0.55rem', border: '1px solid #cbd5e1', borderRadius: '6px', fontFamily: 'inherit' }} />
+                </div>
+
+                <button type="submit" className="btn-whatsapp" style={{ width: '100%', justifyContent: 'center', padding: '0.7rem' }}>
+                  💬 Send Quote Request on WhatsApp
+                </button>
+              </form>
+            </div>
+          </div>
         );
       }
 
@@ -426,6 +514,23 @@
               <AdminPortal products={products} categories={categories} adminToken={adminToken} onLogin={token => setAdminToken(token)} onUpdateProduct={(id, payload) => pushToCloud(products.map(p => p.id === id ? { ...p, ...payload, unit: payload.unit || p.unit || 'sq.ft' } : p))} onAddProduct={p => pushToCloud([{ id: 'prod_' + Date.now(), unit: p.unit || 'sq.ft', image: p.image || 'images/regal-white-marble.png', ...p }, ...products])} onDeleteProduct={id => window.confirm('Delete stock item?') && pushToCloud(products.filter(p => p.id !== id))} onAddCategory={c => setCategories(prev => [...prev, c])} />
             )}
 
+            {/* Modals rendered cleanly */}
+            {showCalcModal && (
+              <TileCalculatorModal 
+                product={calcProduct} 
+                onClose={() => setShowCalcModal(false)} 
+                onInquire={(p, note) => { setInquireProduct(p); setInquireNote(note || ''); setShowInquireModal(true); }} 
+              />
+            )}
+
+            {showInquireModal && (
+              <InquiryModal 
+                product={inquireProduct} 
+                initialNote={inquireNote} 
+                onClose={() => setShowInquireModal(false)} 
+              />
+            )}
+
             <footer className="footer">
               <div className="footer-bottom">© {new Date().getFullYear()} BLUE LEAF TECH. All rights reserved.</div>
             </footer>
@@ -435,8 +540,6 @@
 
       // Customer Store Component
       function CustomerStore({ products, categories, activeCategory, setActiveCategory, onOpenCalc, onInquire, onDownloadPdf }) {
-        const [selectedColors, setSelectedColors] = useState({});
-
         return (
           <main style={{ background: '#ffffff' }}>
             <section className="hero-section">
@@ -463,7 +566,6 @@
             <section className="catalog-section">
               <div className="product-grid">
                 {products.map(prod => {
-                  const activeColorName = selectedColors[prod.id] || (prod.colors && prod.colors[0] ? prod.colors[0].name : '');
                   const displayUnit = prod.unit || 'sq.ft';
 
                   return (
@@ -488,7 +590,7 @@
 
                         <div className="card-actions">
                           <button className="btn-sm-calc" onClick={() => onOpenCalc(prod)}>Calculate</button>
-                          <button className="btn-sm-inquire" onClick={() => onInquire(prod, activeColorName ? `Selected Color: ${activeColorName}` : '')}>Request Quote</button>
+                          <button className="btn-sm-inquire" onClick={() => onInquire(prod, `Inquiry for ${prod.name}`)}>Request Quote</button>
                         </div>
                       </div>
                     </div>
@@ -571,20 +673,25 @@
         };
 
         const exportLeadsCsv = () => {
-          const dummyLeads = [
-            { id: '1', name: 'Rahul Roy', phone: '+91 98765 43210', interest: 'Regal White Marble', note: 'Calculated 330 sq.ft (21 boxes)', date: new Date().toLocaleDateString() },
-            { id: '2', name: 'Amitabh Sen', phone: '+91 94350 12345', interest: 'Smart Commode', note: 'Inquired 4 units', date: new Date().toLocaleDateString() }
+          const csvHeaders = ['Type', 'Item / Customer Name', 'Details / Calculations / Phone', 'Price / Stock', 'Date'];
+          const csvRows = [
+            ['Customer Inquiry Lead', 'Rahul Roy', 'Calculated 330 sq.ft (21 boxes) for 15x20 ft room | Phone: +91 98765 43210', '₹70/sq.ft', new Date().toLocaleDateString()],
+            ['Customer Inquiry Lead', 'Amitabh Sen', 'Inquired wholesale price for 4 Smart Commodes | Phone: +91 94350 12345', '₹6,950/piece', new Date().toLocaleDateString()],
+            ...products.map(p => [
+              'Inventory Stock Item',
+              `"${p.name}"`,
+              `"${p.dimensions} - ${p.finish} (${p.categoryLabel || p.category})"`,
+              `"₹${p.price}/${p.unit || 'sq.ft'} (Stock: ${p.stock})"`,
+              new Date().toLocaleDateString()
+            ])
           ];
 
-          const csvHeaders = ['ID', 'Customer Name', 'Phone Number', 'Product Interest', 'Calculations', 'Date'];
-          const csvRows = dummyLeads.map(l => [l.id, `"${l.name}"`, `"${l.phone}"`, `"${l.interest}"`, `"${l.note}"`, `"${l.date}"`]);
           const csvContent = [csvHeaders.join(','), ...csvRows.map(r => r.join(','))].join('\n');
-
           const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.setAttribute('download', `mr_tiles_leads_${Date.now()}.csv`);
+          link.setAttribute('download', `mr_tiles_leads_and_stock_${Date.now()}.csv`);
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -668,7 +775,7 @@
               </div>
 
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <button className="btn-secondary" onClick={exportLeadsCsv} style={{ padding: '0.5rem 0.8rem', fontSize: '0.8rem' }}>📄 Export CSV</button>
+                <button className="btn-secondary" onClick={exportLeadsCsv} style={{ padding: '0.5rem 0.8rem', fontSize: '0.8rem' }}>📄 Export CSV / Excel</button>
                 <button className="btn-secondary" onClick={() => setShowAddCatModal(true)} style={{ padding: '0.5rem 0.8rem', fontSize: '0.8rem' }}>➕ Add Category</button>
                 <button className="btn-primary" onClick={() => setShowAddModal(true)} style={{ padding: '0.5rem 0.8rem', fontSize: '0.8rem' }}>➕ Add Tile / Stock</button>
               </div>
