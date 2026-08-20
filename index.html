@@ -404,7 +404,7 @@
         
         const [products, setProducts] = useState(() => {
           try {
-            const local = localStorage.getItem('mr_tiles_local_v5');
+            const local = localStorage.getItem('mr_tiles_permanent_catalog_v12');
             if (local) {
               const parsed = JSON.parse(local);
               if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -439,7 +439,7 @@
               if (cloudProdList && Array.isArray(cloudProdList)) {
                 let localProdList = [];
                 try {
-                  const cached = localStorage.getItem('mr_tiles_permanent_catalog_v10');
+                  const cached = localStorage.getItem('mr_tiles_permanent_catalog_v12');
                   if (cached) localProdList = JSON.parse(cached);
                 } catch (e) {}
 
@@ -467,7 +467,7 @@
                 if (finalMergedList.length > 0) {
                   setProducts(finalMergedList);
                   try {
-                    localStorage.setItem('mr_tiles_permanent_catalog_v10', JSON.stringify(finalMergedList));
+                    localStorage.setItem('mr_tiles_permanent_catalog_v12', JSON.stringify(finalMergedList));
                   } catch (e) {}
 
                   if (missingInCloud || finalMergedList.length > cloudProdList.length) {
@@ -522,7 +522,7 @@
           setProducts(sanitized);
 
           try {
-            localStorage.setItem('mr_tiles_local_v5', JSON.stringify(sanitized));
+            localStorage.setItem('mr_tiles_permanent_catalog_v12', JSON.stringify(sanitized));
           } catch(e) {}
 
           try {

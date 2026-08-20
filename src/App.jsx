@@ -15,7 +15,7 @@ export default function App() {
   // Safe Product State Loader with Permanent Local Fallback
   const [allProducts, setAllProducts] = useState(() => {
     try {
-      const saved = localStorage.getItem('mr_tiles_permanent_catalog_v10');
+      const saved = localStorage.getItem('mr_tiles_permanent_catalog_v12');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -78,7 +78,7 @@ export default function App() {
           // Read local cache
           let localProdList = [];
           try {
-            const cached = localStorage.getItem('mr_tiles_permanent_catalog_v10');
+            const cached = localStorage.getItem('mr_tiles_permanent_catalog_v12');
             if (cached) localProdList = JSON.parse(cached);
           } catch (e) {}
 
@@ -110,7 +110,7 @@ export default function App() {
           if (finalMergedList.length > 0) {
             setAllProducts(finalMergedList);
             try {
-              localStorage.setItem('mr_tiles_permanent_catalog_v10', JSON.stringify(finalMergedList));
+              localStorage.setItem('mr_tiles_permanent_catalog_v12', JSON.stringify(finalMergedList));
             } catch (e) {}
 
             // If Render server lost items during restart, automatically heal Render server
@@ -171,7 +171,7 @@ export default function App() {
     setAllProducts(sanitizedList);
 
     try {
-      localStorage.setItem('mr_tiles_permanent_catalog_v10', JSON.stringify(sanitizedList));
+      localStorage.setItem('mr_tiles_permanent_catalog_v12', JSON.stringify(sanitizedList));
     } catch (e) {}
 
     const targetUrl = window.location.hostname.includes('onrender.com') 
