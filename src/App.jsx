@@ -315,11 +315,28 @@ export default function App() {
     await saveProductsList(updatedList);
   };
 
-  // Admin Delete Product
+  // Admin Delete Product (Explicit HTTP DELETE)
   const handleDeleteProduct = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product from stock inventory?')) return;
+    
     const updatedList = allProducts.filter(p => p.id !== id);
-    await saveProductsList(updatedList);
+    setAllProducts(updatedList);
+
+    try {
+      localStorage.setItem('mr_tiles_permanent_catalog_v12', JSON.stringify(updatedList));
+    } catch (e) {}
+
+    const targetUrl = window.location.hostname.includes('onrender.com') 
+      ? `/api/products/${id}` 
+      : `https://mr-tiles-sanitation.onrender.com/api/products/${id}`;
+
+    try {
+      await fetch(targetUrl, {
+        method: 'DELETE'
+      });
+    } catch (err) {
+      console.error('Failed to delete item from server:', err);
+    }
   };
 
   // Open Calculator Modal
