@@ -3,19 +3,12 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { createClient } from '@supabase/supabase-js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-
-// Supabase Cloud DB Configuration (Supports env vars or default production endpoints)
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://mrtilessanitation.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydGlsZXNzYW5pdGF0aW9uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAwMDAwMDAsImV4cCI6MjA1NTAwMDAwMH0.placeholder';
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Global CORS Middleware for Cross-Domain Device Sync
 app.use((req, res, next) => {
@@ -70,13 +63,12 @@ function saveLocalDiskProducts(products) {
   }
 }
 
-// Master Helper to Get Products (Memory -> Cloud DB -> Local File)
-async function getMasterProducts() {
+// Master Helper to Get Products (Memory -> Local File)
+function getMasterProducts() {
   if (inMemoryCatalog && Array.isArray(inMemoryCatalog) && inMemoryCatalog.length > 0) {
     return inMemoryCatalog;
   }
 
-  // Fallback to local disk file
   const localList = getLocalDiskProducts();
   if (localList && localList.length > 0) {
     inMemoryCatalog = localList;
@@ -86,18 +78,10 @@ async function getMasterProducts() {
   return [];
 }
 
-// Master Helper to Save Products (Memory + Local File + Cloud DB Sync)
-async function saveMasterProducts(products) {
+// Master Helper to Save Products (Memory + Local File)
+function saveMasterProducts(products) {
   inMemoryCatalog = products;
   saveLocalDiskProducts(products);
-
-  // Cloud DB Async Persistence
-  try {
-    if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY) {
-      await supabase.from('products').upsert(products, { onConflict: 'id' });
-    }
-  } catch (e) {}
-
   return true;
 }
 
@@ -118,8 +102,8 @@ app.post('/api/admin/login', (req, res) => {
 });
 
 // Public: Get Catalog Products
-app.get('/api/products', async (req, res) => {
-  let products = await getMasterProducts();
+app.get('/api/products', (req, res) => {
+  let products = getMasterProducts();
   const { category, search } = req.query;
 
   if (category && category !== 'all') {
@@ -139,8 +123,8 @@ app.get('/api/products', async (req, res) => {
 });
 
 // Public/Admin Update Product Catalog with Server-Side Union Merge
-app.post('/api/products', async (req, res) => {
-  let currentProducts = await getMasterProducts();
+app.post('/api/products', (req, res) => {
+  let currentProducts = getMasterProducts();
   let incoming = req.body;
 
   if (incoming && incoming.products && Array.isArray(incoming.products)) {
@@ -175,7 +159,7 @@ app.post('/api/products', async (req, res) => {
     });
 
     const mergedList = Array.from(productMap.values());
-    await saveMasterProducts(mergedList);
+    saveMasterProducts(mergedList);
     return res.json({ success: true, products: mergedList });
   }
 
@@ -187,15 +171,15 @@ app.post('/api/products', async (req, res) => {
       ...req.body
     };
     currentProducts.unshift(newProduct);
-    await saveMasterProducts(currentProducts);
+    saveMasterProducts(mergedList);
     return res.json({ success: true, product: newProduct, products: currentProducts });
   }
 
   res.json({ success: true, products: currentProducts });
 });
 
-app.put('/api/products', async (req, res) => {
-  let currentProducts = await getMasterProducts();
+app.put('/api/products', (req, res) => {
+  let currentProducts = getMasterProducts();
   let incoming = req.body;
 
   if (incoming && incoming.products && Array.isArray(incoming.products)) {
@@ -207,7 +191,7 @@ app.put('/api/products', async (req, res) => {
     currentProducts.forEach(p => { if (p && p.id) productMap.set(p.id, p); });
     incoming.forEach(p => { if (p && p.id) productMap.set(p.id, { ...productMap.get(p.id), ...p }); });
     const mergedList = Array.from(productMap.values());
-    await saveMasterProducts(mergedList);
+    saveMasterProducts(mergedList);
     return res.json({ success: true, products: mergedList });
   }
 
@@ -215,11 +199,11 @@ app.put('/api/products', async (req, res) => {
 });
 
 // Explicit Item Delete Route
-app.delete('/api/products/:id', async (req, res) => {
+app.delete('/api/products/:id', (req, res) => {
   const { id } = req.params;
-  let currentProducts = await getMasterProducts();
+  let currentProducts = getMasterProducts();
   const updatedList = currentProducts.filter(p => p.id !== id);
-  await saveMasterProducts(updatedList);
+  saveMasterProducts(updatedList);
   res.json({ success: true, products: updatedList });
 });
 
