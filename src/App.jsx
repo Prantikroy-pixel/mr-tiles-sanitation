@@ -62,7 +62,7 @@ export default function App() {
   const [inquireNote, setInquireNote] = useState('');
   const [showInquireModal, setShowInquireModal] = useState(false);
 
-  // Self-Healing Smart Merge Fetch Logic
+  // Clean Server Master SSOT Sync Logic (Prevents deleted items from resurrecting)
   const fetchLiveCloudProducts = async () => {
     try {
       const targetUrl = window.location.hostname.includes('onrender.com') 
@@ -75,53 +75,16 @@ export default function App() {
         const cloudProdList = result.products || (Array.isArray(result) ? result : null);
 
         if (cloudProdList && Array.isArray(cloudProdList)) {
-          // Read local cache
-          let localProdList = [];
+          const sanitizedList = cloudProdList.map(p => ({
+            ...p,
+            unit: p.unit || 'sq.ft',
+            image: p.image || 'images/regal-white-marble.png'
+          }));
+
+          setAllProducts(sanitizedList);
           try {
-            const cached = localStorage.getItem('mr_tiles_permanent_catalog_v12');
-            if (cached) localProdList = JSON.parse(cached);
+            localStorage.setItem('mr_tiles_permanent_catalog_v12', JSON.stringify(sanitizedList));
           } catch (e) {}
-
-          // Smart Merge by ID to guarantee NO ITEM IS EVER LOST
-          const mergedMap = new Map();
-          
-          // First add all cloud products
-          cloudProdList.forEach(p => {
-            if (p && p.id) {
-              mergedMap.set(p.id, {
-                ...p,
-                unit: p.unit || 'sq.ft',
-                image: p.image || 'images/regal-white-marble.png'
-              });
-            }
-          });
-
-          // Then add any local products that cloud might have missed during server restart
-          let missingInCloud = false;
-          localProdList.forEach(p => {
-            if (p && p.id && !mergedMap.has(p.id)) {
-              mergedMap.set(p.id, p);
-              missingInCloud = true;
-            }
-          });
-
-          const finalMergedList = Array.from(mergedMap.values());
-
-          if (finalMergedList.length > 0) {
-            setAllProducts(finalMergedList);
-            try {
-              localStorage.setItem('mr_tiles_permanent_catalog_v12', JSON.stringify(finalMergedList));
-            } catch (e) {}
-
-            // If Render server lost items during restart, automatically heal Render server
-            if (missingInCloud || finalMergedList.length > cloudProdList.length) {
-              fetch(targetUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(finalMergedList)
-              }).catch(() => {});
-            }
-          }
         }
       }
     } catch (err) {}
