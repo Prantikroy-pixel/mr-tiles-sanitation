@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from './components/Header.jsx';
 import CustomerStore from './components/CustomerStore.jsx';
 import AdminPortal from './components/AdminPortal.jsx';
@@ -8,8 +8,9 @@ import { DEFAULT_PRODUCTS } from './data/defaultProducts.js';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('store');
+  const isEditingRef = useRef(false);
   
-  // Safe Product State Loader with Fallback to DEFAULT_PRODUCTS
+  // Product State Loader (Local SSOT + Fallback)
   const [allProducts, setAllProducts] = useState(() => {
     try {
       const saved = localStorage.getItem('mr_tiles_permanent_catalog_v12');
@@ -23,7 +24,7 @@ export default function App() {
 
   const [filteredProducts, setFilteredProducts] = useState(allProducts);
 
-  // Category State Loader with Fallback
+  // Category State Loader (Local SSOT + Fallback)
   const [categories, setCategories] = useState(() => {
     try {
       const savedCats = localStorage.getItem('mr_tiles_custom_categories_v12');
@@ -43,7 +44,7 @@ export default function App() {
 
   const [activeCategory, setActiveCategory] = useState('all');
 
-  // Safe Admin Token State
+  // Admin Token State
   const [adminToken, setAdminToken] = useState(() => {
     try {
       return localStorage.getItem('mr_admin_token') || '';
@@ -59,7 +60,7 @@ export default function App() {
   const [inquireNote, setInquireNote] = useState('');
   const [showInquireModal, setShowInquireModal] = useState(false);
 
-  // Master Category Persistence Helper (Domain-Agnostic)
+  // Master Category Persistence Helper (Instant Local + Immediate Cloud Sync)
   const saveCategoriesList = async (updatedCats) => {
     setCategories(updatedCats);
     try {
@@ -75,7 +76,7 @@ export default function App() {
     } catch (err) {}
   };
 
-  // Master Product Persistence Helper (Domain-Agnostic)
+  // Master Product Persistence Helper (Instant Local + Immediate Cloud Sync)
   const saveProductsList = async (updatedList) => {
     const sanitizedList = updatedList.map(p => ({
       ...p,
@@ -100,8 +101,9 @@ export default function App() {
     } catch (err) {}
   };
 
-  // Domain-Agnostic Cloud Fetch Products
+  // Real-Time Master Product Fetch (Exact Server SSOT for Cross-Device Deletions & Edits)
   const fetchLiveCloudProducts = async () => {
+    if (isEditingRef.current) return; // Pause fetch while admin is actively typing in inputs
     try {
       const res = await fetch('/api/products');
       if (res.ok) {
@@ -110,7 +112,7 @@ export default function App() {
           const result = await res.json();
           const cloudProdList = result.products || (Array.isArray(result) ? result : null);
 
-          if (cloudProdList && Array.isArray(cloudProdList) && cloudProdList.length > 0) {
+          if (cloudProdList && Array.isArray(cloudProdList)) {
             const sanitizedList = cloudProdList.map(p => ({
               ...p,
               unit: p.unit || 'sq.ft',
@@ -127,8 +129,9 @@ export default function App() {
     } catch (err) {}
   };
 
-  // Domain-Agnostic Cloud Fetch Categories
+  // Real-Time Master Category Fetch (Exact Server SSOT for Cross-Device Deletions & Edits)
   const fetchLiveCategories = async () => {
+    if (isEditingRef.current) return; // Pause fetch while admin is actively typing
     try {
       const res = await fetch('/api/categories');
       if (res.ok) {
@@ -136,29 +139,25 @@ export default function App() {
         if (contentType && contentType.includes('application/json')) {
           const result = await res.json();
           if (result.categories && Array.isArray(result.categories) && result.categories.length > 0) {
-            setCategories(prev => {
-              const currentMap = new Map(prev.map(c => [c.id, c]));
-              result.categories.forEach(c => {
-                if (!currentMap.has(c.id)) {
-                  currentMap.set(c.id, c);
-                }
-              });
-              const merged = Array.from(currentMap.values());
-              try {
-                localStorage.setItem('mr_tiles_custom_categories_v12', JSON.stringify(merged));
-              } catch (e) {}
-              return merged;
-            });
+            setCategories(result.categories);
+            try {
+              localStorage.setItem('mr_tiles_custom_categories_v12', JSON.stringify(result.categories));
+            } catch (e) {}
           }
         }
       }
     } catch (err) {}
   };
 
-  // Run initial fetch on mount only
+  // Cross-Device Real-Time Synchronization Interval (4-Second Heartbeat)
   useEffect(() => {
     fetchLiveCloudProducts();
     fetchLiveCategories();
+    const interval = setInterval(() => {
+      fetchLiveCloudProducts();
+      fetchLiveCategories();
+    }, 4000);
+    return () => clearInterval(interval);
   }, []);
 
   // Filter products based on active category
@@ -196,7 +195,7 @@ export default function App() {
     await saveProductsList(updatedProds);
   };
 
-  // Handle Category Deletion
+  // Handle Category Deletion Across Devices
   const handleDeleteCategory = async (catId) => {
     if (!window.confirm('Are you sure you want to delete this category section? Products under this category will remain accessible under All Products.')) return;
     
@@ -291,7 +290,7 @@ export default function App() {
     setCurrentView('store');
   };
 
-  // Admin Update Product
+  // Admin Update Product Across Devices
   const handleUpdateProduct = async (id, updatePayload) => {
     const updatedList = allProducts.map(p => p.id === id ? { 
       ...p, 
@@ -302,7 +301,7 @@ export default function App() {
     await saveProductsList(updatedList);
   };
 
-  // Admin Add Product
+  // Admin Add Product Across Devices
   const handleAddProduct = async (productData) => {
     const newProd = {
       id: 'prod_' + Date.now(),
@@ -316,7 +315,7 @@ export default function App() {
     await saveProductsList(updatedList);
   };
 
-  // Admin Delete Product (Explicit HTTP DELETE + Master Sync)
+  // Admin Delete Product Across Devices
   const handleDeleteProduct = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product from stock inventory?')) return;
     
