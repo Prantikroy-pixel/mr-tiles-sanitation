@@ -190,11 +190,9 @@ app.get('/api/products', (req, res) => {
   res.json({ success: true, count: products.length, products });
 });
 
-// Public/Admin Update Product Catalog
+// Public/Admin Master Save Products Endpoint
 app.post('/api/products', (req, res) => {
-  let currentProducts = getMasterProducts();
   let incoming = req.body;
-
   if (incoming && incoming.products && Array.isArray(incoming.products)) {
     incoming = incoming.products;
   }
@@ -205,20 +203,22 @@ app.post('/api/products', (req, res) => {
   }
 
   if (req.body && req.body.name) {
+    const currentProducts = getMasterProducts();
     const newProduct = {
       id: 'prod_' + Date.now(),
       unit: req.body.unit || 'sq.ft',
       image: req.body.image || 'images/regal-white-marble.png',
       ...req.body
     };
-    currentProducts.unshift(newProduct);
-    saveMasterProducts(currentProducts);
-    return res.json({ success: true, product: newProduct, products: currentProducts });
+    const updatedList = [newProduct, ...currentProducts];
+    saveMasterProducts(updatedList);
+    return res.json({ success: true, product: newProduct, products: updatedList });
   }
 
-  res.json({ success: true, products: currentProducts });
+  res.json({ success: true, products: getMasterProducts() });
 });
 
+// Explicit Item Update Route
 app.put('/api/products/:id', (req, res) => {
   const { id } = req.params;
   const updatePayload = req.body;
@@ -226,20 +226,6 @@ app.put('/api/products/:id', (req, res) => {
   const updatedList = currentProducts.map(p => p.id === id ? { ...p, ...updatePayload } : p);
   saveMasterProducts(updatedList);
   res.json({ success: true, products: updatedList });
-});
-
-app.put('/api/products', (req, res) => {
-  let incoming = req.body;
-  if (incoming && incoming.products && Array.isArray(incoming.products)) {
-    incoming = incoming.products;
-  }
-
-  if (Array.isArray(incoming)) {
-    saveMasterProducts(incoming);
-    return res.json({ success: true, products: incoming });
-  }
-
-  res.json({ success: true, products: getMasterProducts() });
 });
 
 // Explicit Item Delete Route

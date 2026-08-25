@@ -386,7 +386,7 @@
             await fetch(LIVE_CLOUD_API_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(sanitized)
+              body: JSON.stringify({ products: sanitized })
             });
           } catch (err) {}
         };
