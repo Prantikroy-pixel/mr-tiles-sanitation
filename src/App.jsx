@@ -208,7 +208,7 @@ export default function App() {
         </head>
         <body>
           <h1>M R TILES AND SANITATION SILCHAR</h1>
-          <p>Trinayani Ln, near Karan TVS Showroom, Kanakpur, Silchar, Assam - 788006 • Phone/WhatsApp: +91 70993 14333 • Email: mrtilesandsanitation@gmail.com</p>
+          <p>Trinayani Ln, near Karan TVS Showroom, Kanakpur, Silchar, Assam - 788006 • Phone/WhatsApp: +91 70993 13433 • Email: mrtilesandsanitation@gmail.com</p>
           <h3>Official Product & Price Catalogue</h3>
           <table>
             <thead>
@@ -408,7 +408,7 @@ export default function App() {
           <div>
             <h4 style={{ color: '#0f172a', fontSize: '1.1rem', marginBottom: '0.75rem' }}>Stock & Sales Desk</h4>
             <p style={{ fontSize: '0.85rem' }}>
-              Phone/WhatsApp: +91 70993 14333<br />
+              Phone/WhatsApp: +91 70993 13433<br />
               Email: mrtilesandsanitation@gmail.com<br />
               Mon - Sat: 9:30 AM - 8:00 PM
             </p>

@@ -10,7 +10,7 @@ export default function InquiryModal({ product, initialNote, onClose }) {
   const [loading, setLoading] = useState(false);
 
   const getWhatsAppLink = () => {
-    const storePhone = '917099314333';
+    const storePhone = '917099313433';
     const prodName = product ? product.name : 'General Inquiry';
     const prodPrice = product ? ` (₹${product.price}/${product.unit})` : '';
 

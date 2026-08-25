@@ -135,7 +135,7 @@ export default function CustomerStore({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.88rem', marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-dark)' }}>
                 <Phone size={16} style={{ color: 'var(--text-dark)' }} />
-                <strong>Call / WhatsApp:</strong> +91 70993 14333
+                <strong>Call / WhatsApp:</strong> +91 70993 13433
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-dark)' }}>
                 <Mail size={16} style={{ color: 'var(--text-dark)' }} />
