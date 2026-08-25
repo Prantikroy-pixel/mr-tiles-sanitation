@@ -4,7 +4,6 @@ import CustomerStore from './components/CustomerStore.jsx';
 import AdminPortal from './components/AdminPortal.jsx';
 import TileCalculatorModal from './components/TileCalculatorModal.jsx';
 import InquiryModal from './components/InquiryModal.jsx';
-import { DEFAULT_PRODUCTS } from './data/defaultProducts.js';
 
 // Absolute Production Server API Endpoint for M R Tiles & Sanitation
 const LIVE_RENDER_API_URL = 'https://mr-tiles-sanitation.onrender.com/api/products';
@@ -140,32 +139,6 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // Dynamically sync custom categories across devices based on product catalog
-  useEffect(() => {
-    if (allProducts && allProducts.length > 0) {
-      const knownIds = new Set(categories.map(c => c.id));
-      const newFoundCats = [];
-
-      allProducts.forEach(p => {
-        if (p.category && !knownIds.has(p.category)) {
-          knownIds.add(p.category);
-          newFoundCats.push({
-            id: p.category,
-            label: p.categoryLabel || p.category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-          });
-        }
-      });
-
-      if (newFoundCats.length > 0) {
-        const updated = [...categories, ...newFoundCats];
-        setCategories(updated);
-        try {
-          localStorage.setItem('mr_tiles_custom_categories_v10', JSON.stringify(updated));
-        } catch (e) {}
-      }
-    }
-  }, [allProducts]);
-
   // Save Products to State, Local Storage & Central Render Server Database
   const saveProductsList = async (updatedList) => {
     const sanitizedList = updatedList.map(p => ({
@@ -190,7 +163,7 @@ export default function App() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(sanitizedList)
+        body: JSON.stringify({ products: sanitizedList })
       });
     } catch (err) {
       console.error('Failed to sync changes to Render Cloud DB:', err);
@@ -360,13 +333,13 @@ export default function App() {
   };
 
   // Handle Category Rename Customization
-  const handleUpdateCategory = (catId, newLabel) => {
+  const handleUpdateCategory = async (catId, newLabel) => {
     const updatedCats = categories.map(c => c.id === catId ? { ...c, label: newLabel } : c);
-    saveCategoriesList(updatedCats);
+    await saveCategoriesList(updatedCats);
 
     // Update matching products category labels
     const updatedProds = allProducts.map(p => p.category === catId ? { ...p, categoryLabel: newLabel } : p);
-    saveProductsList(updatedProds);
+    await saveProductsList(updatedProds);
   };
 
   const handleDeleteCategory = async (catId) => {
@@ -374,7 +347,11 @@ export default function App() {
     
     const updatedCats = categories.filter(c => c.id !== catId);
     if (activeCategory === catId) setActiveCategory('all');
-    saveCategoriesList(updatedCats);
+    await saveCategoriesList(updatedCats);
+
+    // Clean products pointing to deleted category
+    const updatedProds = allProducts.map(p => p.category === catId ? { ...p, category: 'all', categoryLabel: 'All Products' } : p);
+    await saveProductsList(updatedProds);
 
     const targetUrl = window.location.hostname.includes('onrender.com') 
       ? `/api/categories/${catId}` 
@@ -424,7 +401,7 @@ export default function App() {
         <TileCalculatorModal 
           product={calcProduct}
           onClose={() => setShowCalcModal(false)}
-          onInquire={(p, note) => openInquiry(p, note)}
+          onInquire={openInquiry}
         />
       )}
 
@@ -436,12 +413,13 @@ export default function App() {
         />
       )}
 
+      {/* Footer */}
       <footer className="footer">
-        <div className="footer-content">
+        <div className="footer-content" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
           <div>
-            <h4 style={{ color: '#0f172a', fontSize: '1.1rem', marginBottom: '0.75rem' }}>M R TILES AND SANITATION</h4>
-            <p style={{ fontSize: '0.85rem' }}>
-              Your trusted partner for residential & commercial flooring, wall cladding, and luxury bathroom sanitaryware.
+            <h3 style={{ color: '#0f172a', fontSize: '1.25rem', marginBottom: '0.75rem' }}>M R TILES AND SANITATION SILCHAR</h3>
+            <p style={{ color: '#64748b', fontSize: '0.85rem' }}>
+              Your trusted partner for premium vitrified tiles, ceramic wall tiles, sanitaryware, and designer doors in Silchar, Assam.
             </p>
           </div>
 
