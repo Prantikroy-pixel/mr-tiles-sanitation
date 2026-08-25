@@ -35,6 +35,7 @@ export default function AdminPortal({
   const [newDimensions, setNewDimensions] = useState('');
   const [newFinish, setNewFinish] = useState('');
   const [newImage, setNewImage] = useState('images/regal-white-marble.png');
+  const [newImages, setNewImages] = useState([]);
   const [newDescription, setNewDescription] = useState('');
   const [isCompressing, setIsCompressing] = useState(false);
 
@@ -45,20 +46,29 @@ export default function AdminPortal({
   const [editingCatId, setEditingCatId] = useState(null);
   const [editingCatLabel, setEditingCatLabel] = useState('');
 
-  // Handle Photo Upload with HTML5 Canvas Compression
-  const handleImageFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  // Handle Multiple Photo Upload with HTML5 Canvas Compression
+  const handleMultipleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
 
     try {
       setIsCompressing(true);
-      const compressedBase64 = await compressImageFile(file, 800, 800, 0.75);
-      setNewImage(compressedBase64);
+      const compressedList = await Promise.all(
+        files.map(file => compressImageFile(file, 800, 800, 0.75))
+      );
+      setNewImages(prev => [...prev, ...compressedList]);
+      if (compressedList.length > 0 && (!newImage || newImage === 'images/regal-white-marble.png')) {
+        setNewImage(compressedList[0]);
+      }
     } catch (err) {
-      alert('Failed to process image file. Please try a different photo.');
+      alert('Failed to process image files. Please try again.');
     } finally {
       setIsCompressing(false);
     }
+  };
+
+  const removeImageAtIndex = (idxToRemove) => {
+    setNewImages(prev => prev.filter((_, idx) => idx !== idxToRemove));
   };
 
   const handleLoginSubmit = (e) => {
@@ -101,6 +111,9 @@ export default function AdminPortal({
     }
 
     const matchedCat = categories.find(c => c.id === newCategory);
+    const finalImagesList = newImages.length > 0 
+      ? newImages 
+      : [newImage || 'images/regal-white-marble.png'];
 
     onAddProduct({
       name: newName.trim(),
@@ -111,7 +124,8 @@ export default function AdminPortal({
       stock: Number(newStock),
       dimensions: newDimensions || 'Standard',
       finish: newFinish || 'High Gloss',
-      image: newImage || 'images/regal-white-marble.png',
+      image: finalImagesList[0],
+      images: finalImagesList,
       description: newDescription || 'Premium quality product from M R Tiles & Sanitation.'
     });
 
@@ -123,6 +137,7 @@ export default function AdminPortal({
     setNewFinish('');
     setNewDescription('');
     setNewImage('images/regal-white-marble.png');
+    setNewImages([]);
   };
 
   const handleAddCategorySubmit = (e) => {
@@ -307,13 +322,14 @@ export default function AdminPortal({
             {products.map(p => {
               const isEditing = editingId === p.id;
               const displayUnit = p.unit || 'sq.ft';
+              const displayImg = (p.images && p.images.length > 0) ? p.images[0] : (p.image || 'images/regal-white-marble.png');
 
               return (
                 <tr key={p.id}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                       <img 
-                        src={p.image || 'images/regal-white-marble.png'} 
+                        src={displayImg} 
                         alt={p.name} 
                         style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#f8fafc', flexShrink: 0 }} 
                       />
@@ -328,7 +344,9 @@ export default function AdminPortal({
                         ) : (
                           <div style={{ fontWeight: 'bold', color: '#0f172a', fontSize: '0.85rem' }}>{p.name}</div>
                         )}
-                        <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{p.dimensions}</div>
+                        <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                          {p.dimensions} {p.images && p.images.length > 1 ? `• ${p.images.length} photos` : ''}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -384,7 +402,7 @@ export default function AdminPortal({
       {/* Add New Product Modal */}
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px', width: '92%' }}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px', width: '92%', maxHeight: '90vh', overflowY: 'auto' }}>
             <button type="button" className="modal-close" onClick={() => setShowAddModal(false)}>✕</button>
 
             <h3 style={{ fontSize: '1.2rem', color: '#0f172a', marginBottom: '0.85rem' }}>Introduce New Product / Stock</h3>
@@ -479,27 +497,45 @@ export default function AdminPortal({
                 />
               </div>
 
-              {/* Upload Product Photo from Device */}
+              {/* Multiple Device Photos File Picker */}
               <div style={{ marginBottom: '0.85rem', background: '#f8fafc', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                 <label style={{ display: 'block', fontSize: '0.8rem', color: '#0f172a', fontWeight: '600', marginBottom: '0.3rem' }}>
                   <Upload size={14} style={{ verticalAlign: 'middle', marginRight: '0.3rem', color: '#2563eb' }} />
-                  Upload Product Photo from Device
+                  Upload Multiple Photos from Device (Select 1 or more)
                 </label>
                 <input 
                   type="file" 
+                  multiple
                   accept="image/*" 
-                  onChange={handleImageFileUpload}
+                  onChange={handleMultipleImageUpload}
                   style={{ width: '100%', padding: '0.45rem', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.82rem', background: '#ffffff' }}
                 />
                 {isCompressing && (
                   <div style={{ fontSize: '0.75rem', color: '#2563eb', marginTop: '0.3rem', fontWeight: '600' }}>
-                    ⏳ Compressing & optimizing photo...
+                    ⏳ Compressing & optimizing photos...
                   </div>
                 )}
-                {newImage && newImage.startsWith('data:image') && (
-                  <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <img src={newImage} alt="Preview" style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
-                    <span style={{ fontSize: '0.78rem', color: '#16a34a', fontWeight: '700' }}>✓ Custom Photo Loaded</span>
+
+                {newImages.length > 0 && (
+                  <div style={{ marginTop: '0.6rem' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: '700', marginBottom: '0.35rem' }}>
+                      ✓ {newImages.length} Photo{newImages.length > 1 ? 's' : ''} Uploaded (First photo is Main Cover)
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+                      {newImages.map((img, idx) => (
+                        <div key={idx} style={{ position: 'relative', display: 'inline-block' }}>
+                          <img src={img} alt={`Tile ${idx+1}`} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px', border: idx === 0 ? '2px solid #2563eb' : '1px solid #cbd5e1' }} />
+                          <button 
+                            type="button" 
+                            onClick={() => removeImageAtIndex(idx)}
+                            style={{ position: 'absolute', top: '-6px', right: '-6px', background: '#c5221f', color: '#fff', border: 'none', borderRadius: '50%', width: '18px', height: '18px', fontSize: '10px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                            title="Remove photo"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -516,7 +552,7 @@ export default function AdminPortal({
               </div>
 
               <button type="submit" disabled={isCompressing} className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.65rem' }}>
-                <Plus size={16} /> {isCompressing ? 'Processing Photo...' : 'Add Product to Inventory'}
+                <Plus size={16} /> {isCompressing ? 'Processing Photos...' : 'Add Product to Inventory'}
               </button>
             </form>
           </div>
