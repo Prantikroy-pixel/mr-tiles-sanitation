@@ -342,21 +342,24 @@
         // Clean Server Master SSOT Sync Logic (Prevents deleted items from resurrecting)
         const fetchCloudProducts = async () => {
           try {
-            const res = await fetch(LIVE_CLOUD_API_URL);
+            const res = await fetch('/api/products');
             if (res.ok) {
-              const result = await res.json();
-              const cloudProdList = result.products || (Array.isArray(result) ? result : null);
-              if (cloudProdList && Array.isArray(cloudProdList) && cloudProdList.length > 0) {
-                const sanitizedList = cloudProdList.map(p => ({
-                  ...p,
-                  unit: p.unit || 'sq.ft',
-                  image: p.image || 'images/regal-white-marble.png'
-                }));
+              const contentType = res.headers.get('content-type');
+              if (contentType && contentType.includes('application/json')) {
+                const result = await res.json();
+                const cloudProdList = result.products || (Array.isArray(result) ? result : null);
+                if (cloudProdList && Array.isArray(cloudProdList) && cloudProdList.length > 0) {
+                  const sanitizedList = cloudProdList.map(p => ({
+                    ...p,
+                    unit: p.unit || 'sq.ft',
+                    image: p.image || 'images/regal-white-marble.png'
+                  }));
 
-                setProducts(sanitizedList);
-                try {
-                  localStorage.setItem('mr_tiles_permanent_catalog_v12', JSON.stringify(sanitizedList));
-                } catch (e) {}
+                  setProducts(sanitizedList);
+                  try {
+                    localStorage.setItem('mr_tiles_permanent_catalog_v12', JSON.stringify(sanitizedList));
+                  } catch (e) {}
+                }
               }
             }
           } catch (err) {}
@@ -381,7 +384,7 @@
           } catch(e) {}
 
           try {
-            await fetch(LIVE_CLOUD_API_URL, {
+            await fetch('/api/products', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ products: sanitized })
@@ -395,12 +398,8 @@
           const updated = products.filter(p => p.id !== id);
           pushToCloud(updated);
 
-          const targetUrl = window.location.hostname.includes('onrender.com') 
-            ? `/api/products/${id}` 
-            : `${LIVE_CLOUD_API_URL}/${id}`;
-
           try {
-            await fetch(targetUrl, { method: 'DELETE' });
+            await fetch(`/api/products/${id}`, { method: 'DELETE' });
           } catch(e) {}
         };
 
@@ -411,12 +410,8 @@
             localStorage.setItem('mr_tiles_custom_categories_v10', JSON.stringify(updatedCats));
           } catch(e) {}
 
-          const catUrl = window.location.hostname.includes('onrender.com') 
-            ? '/api/categories' 
-            : 'https://mr-tiles-sanitation.onrender.com/api/categories';
-
           try {
-            await fetch(catUrl, {
+            await fetch('/api/categories', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ categories: updatedCats })
@@ -443,12 +438,8 @@
           if (activeCategory === catId) setActiveCategory('all');
           pushCategoriesToCloud(updatedCats);
 
-          const targetUrl = window.location.hostname.includes('onrender.com') 
-            ? `/api/categories/${catId}` 
-            : `https://mr-tiles-sanitation.onrender.com/api/categories/${catId}`;
-
           try {
-            await fetch(targetUrl, { method: 'DELETE' });
+            await fetch(`/api/categories/${catId}`, { method: 'DELETE' });
           } catch(e) {}
         };
 

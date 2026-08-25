@@ -5,9 +5,6 @@ import AdminPortal from './components/AdminPortal.jsx';
 import TileCalculatorModal from './components/TileCalculatorModal.jsx';
 import InquiryModal from './components/InquiryModal.jsx';
 
-// Absolute Production Server API Endpoint for M R Tiles & Sanitation
-const LIVE_RENDER_API_URL = 'https://mr-tiles-sanitation.onrender.com/api/products';
-
 export default function App() {
   const [currentView, setCurrentView] = useState('store');
   
@@ -61,19 +58,15 @@ export default function App() {
   const [inquireNote, setInquireNote] = useState('');
   const [showInquireModal, setShowInquireModal] = useState(false);
 
-  // Master Category Persistence Helper (Local SSOT + Server Sync)
+  // Master Category Persistence Helper (Domain-Agnostic)
   const saveCategoriesList = async (updatedCats) => {
     setCategories(updatedCats);
     try {
       localStorage.setItem('mr_tiles_custom_categories_v12', JSON.stringify(updatedCats));
     } catch (e) {}
 
-    const targetUrl = window.location.hostname.includes('onrender.com') 
-      ? '/api/categories' 
-      : 'https://mr-tiles-sanitation.onrender.com/api/categories';
-
     try {
-      await fetch(targetUrl, {
+      await fetch('/api/categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ categories: updatedCats })
@@ -81,7 +74,7 @@ export default function App() {
     } catch (err) {}
   };
 
-  // Master Product Persistence Helper (Local SSOT + Server Sync)
+  // Master Product Persistence Helper (Domain-Agnostic)
   const saveProductsList = async (updatedList) => {
     const sanitizedList = updatedList.map(p => ({
       ...p,
@@ -95,75 +88,67 @@ export default function App() {
       localStorage.setItem('mr_tiles_permanent_catalog_v12', JSON.stringify(sanitizedList));
     } catch (e) {}
 
-    const targetUrl = window.location.hostname.includes('onrender.com') 
-      ? '/api/products' 
-      : LIVE_RENDER_API_URL;
-
     try {
-      await fetch(targetUrl, {
+      await fetch('/api/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ products: sanitizedList })
       });
-    } catch (err) {
-      console.error('Failed to sync changes to Render Cloud DB:', err);
-    }
+    } catch (err) {}
   };
 
-  // Fetch products from server without wiping local edits
+  // Domain-Agnostic Cloud Fetch Products
   const fetchLiveCloudProducts = async () => {
     try {
-      const targetUrl = window.location.hostname.includes('onrender.com') 
-        ? '/api/products' 
-        : LIVE_RENDER_API_URL;
-
-      const res = await fetch(targetUrl);
+      const res = await fetch('/api/products');
       if (res.ok) {
-        const result = await res.json();
-        const cloudProdList = result.products || (Array.isArray(result) ? result : null);
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const result = await res.json();
+          const cloudProdList = result.products || (Array.isArray(result) ? result : null);
 
-        if (cloudProdList && Array.isArray(cloudProdList) && cloudProdList.length > 0) {
-          const sanitizedList = cloudProdList.map(p => ({
-            ...p,
-            unit: p.unit || 'sq.ft',
-            image: p.image || 'images/regal-white-marble.png'
-          }));
+          if (cloudProdList && Array.isArray(cloudProdList) && cloudProdList.length > 0) {
+            const sanitizedList = cloudProdList.map(p => ({
+              ...p,
+              unit: p.unit || 'sq.ft',
+              image: p.image || 'images/regal-white-marble.png'
+            }));
 
-          setAllProducts(sanitizedList);
-          try {
-            localStorage.setItem('mr_tiles_permanent_catalog_v12', JSON.stringify(sanitizedList));
-          } catch (e) {}
+            setAllProducts(sanitizedList);
+            try {
+              localStorage.setItem('mr_tiles_permanent_catalog_v12', JSON.stringify(sanitizedList));
+            } catch (e) {}
+          }
         }
       }
     } catch (err) {}
   };
 
-  // Fetch categories from server using non-destructive merge
+  // Domain-Agnostic Cloud Fetch Categories
   const fetchLiveCategories = async () => {
     try {
-      const targetUrl = window.location.hostname.includes('onrender.com') 
-        ? '/api/categories' 
-        : 'https://mr-tiles-sanitation.onrender.com/api/categories';
-
-      const res = await fetch(targetUrl);
+      const res = await fetch('/api/categories');
       if (res.ok) {
-        const result = await res.json();
-        if (result.categories && Array.isArray(result.categories) && result.categories.length > 0) {
-          setCategories(prev => {
-            const currentMap = new Map(prev.map(c => [c.id, c]));
-            result.categories.forEach(c => {
-              if (!currentMap.has(c.id)) {
-                currentMap.set(c.id, c);
-              }
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const result = await res.json();
+          if (result.categories && Array.isArray(result.categories) && result.categories.length > 0) {
+            setCategories(prev => {
+              const currentMap = new Map(prev.map(c => [c.id, c]));
+              result.categories.forEach(c => {
+                if (!currentMap.has(c.id)) {
+                  currentMap.set(c.id, c);
+                }
+              });
+              const merged = Array.from(currentMap.values());
+              try {
+                localStorage.setItem('mr_tiles_custom_categories_v12', JSON.stringify(merged));
+              } catch (e) {}
+              return merged;
             });
-            const merged = Array.from(currentMap.values());
-            try {
-              localStorage.setItem('mr_tiles_custom_categories_v12', JSON.stringify(merged));
-            } catch (e) {}
-            return merged;
-          });
+          }
         }
       }
     } catch (err) {}
@@ -222,12 +207,8 @@ export default function App() {
     const updatedProds = allProducts.map(p => p.category === catId ? { ...p, category: 'all', categoryLabel: 'All Products' } : p);
     await saveProductsList(updatedProds);
 
-    const targetUrl = window.location.hostname.includes('onrender.com') 
-      ? `/api/categories/${catId}` 
-      : `https://mr-tiles-sanitation.onrender.com/api/categories/${catId}`;
-
     try {
-      await fetch(targetUrl, { method: 'DELETE' });
+      await fetch(`/api/categories/${catId}`, { method: 'DELETE' });
     } catch (err) {}
   };
 
@@ -341,12 +322,8 @@ export default function App() {
     const updatedList = allProducts.filter(p => p.id !== id);
     await saveProductsList(updatedList);
 
-    const targetUrl = window.location.hostname.includes('onrender.com') 
-      ? `/api/products/${id}` 
-      : `https://mr-tiles-sanitation.onrender.com/api/products/${id}`;
-
     try {
-      await fetch(targetUrl, { method: 'DELETE' });
+      await fetch(`/api/products/${id}`, { method: 'DELETE' });
     } catch (err) {}
   };
 
