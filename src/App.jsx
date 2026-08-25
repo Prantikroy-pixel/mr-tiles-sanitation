@@ -11,7 +11,7 @@ const LIVE_RENDER_API_URL = 'https://mr-tiles-sanitation.onrender.com/api/produc
 export default function App() {
   const [currentView, setCurrentView] = useState('store');
   
-  // Safe Product State Loader with Permanent Local Fallback
+  // Safe Product State Loader with Permanent Local Storage SSOT
   const [allProducts, setAllProducts] = useState(() => {
     try {
       const saved = localStorage.getItem('mr_tiles_permanent_catalog_v12');
@@ -25,10 +25,10 @@ export default function App() {
 
   const [filteredProducts, setFilteredProducts] = useState(allProducts);
 
-  // Category State Loader
+  // Category State Loader with Permanent Local Storage SSOT
   const [categories, setCategories] = useState(() => {
     try {
-      const savedCats = localStorage.getItem('mr_tiles_custom_categories_v10');
+      const savedCats = localStorage.getItem('mr_tiles_custom_categories_v12');
       if (savedCats) {
         const parsed = JSON.parse(savedCats);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -61,58 +61,11 @@ export default function App() {
   const [inquireNote, setInquireNote] = useState('');
   const [showInquireModal, setShowInquireModal] = useState(false);
 
-  // Clean Server Master SSOT Sync Logic (Prevents deleted items from resurrecting)
-  const fetchLiveCloudProducts = async () => {
-    try {
-      const targetUrl = window.location.hostname.includes('onrender.com') 
-        ? '/api/products' 
-        : LIVE_RENDER_API_URL;
-
-      const res = await fetch(targetUrl);
-      if (res.ok) {
-        const result = await res.json();
-        const cloudProdList = result.products || (Array.isArray(result) ? result : null);
-
-        if (cloudProdList && Array.isArray(cloudProdList)) {
-          const sanitizedList = cloudProdList.map(p => ({
-            ...p,
-            unit: p.unit || 'sq.ft',
-            image: p.image || 'images/regal-white-marble.png'
-          }));
-
-          setAllProducts(sanitizedList);
-          try {
-            localStorage.setItem('mr_tiles_permanent_catalog_v12', JSON.stringify(sanitizedList));
-          } catch (e) {}
-        }
-      }
-    } catch (err) {}
-  };
-
-  // Clean Server Category Sync Logic
-  const fetchLiveCategories = async () => {
-    try {
-      const targetUrl = window.location.hostname.includes('onrender.com') 
-        ? '/api/categories' 
-        : 'https://mr-tiles-sanitation.onrender.com/api/categories';
-
-      const res = await fetch(targetUrl);
-      if (res.ok) {
-        const result = await res.json();
-        if (result.categories && Array.isArray(result.categories)) {
-          setCategories(result.categories);
-          try {
-            localStorage.setItem('mr_tiles_custom_categories_v10', JSON.stringify(result.categories));
-          } catch (e) {}
-        }
-      }
-    } catch (err) {}
-  };
-
+  // Master Category Persistence Helper (Local SSOT + Server Sync)
   const saveCategoriesList = async (updatedCats) => {
     setCategories(updatedCats);
     try {
-      localStorage.setItem('mr_tiles_custom_categories_v10', JSON.stringify(updatedCats));
+      localStorage.setItem('mr_tiles_custom_categories_v12', JSON.stringify(updatedCats));
     } catch (e) {}
 
     const targetUrl = window.location.hostname.includes('onrender.com') 
@@ -128,18 +81,7 @@ export default function App() {
     } catch (err) {}
   };
 
-  // Poll central Render backend server every 4 seconds for real-time cross-device updates
-  useEffect(() => {
-    fetchLiveCloudProducts();
-    fetchLiveCategories();
-    const timer = setInterval(() => {
-      fetchLiveCloudProducts();
-      fetchLiveCategories();
-    }, 4000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Save Products to State, Local Storage & Central Render Server Database
+  // Master Product Persistence Helper (Local SSOT + Server Sync)
   const saveProductsList = async (updatedList) => {
     const sanitizedList = updatedList.map(p => ({
       ...p,
@@ -170,6 +112,69 @@ export default function App() {
     }
   };
 
+  // Fetch products from server without wiping local edits
+  const fetchLiveCloudProducts = async () => {
+    try {
+      const targetUrl = window.location.hostname.includes('onrender.com') 
+        ? '/api/products' 
+        : LIVE_RENDER_API_URL;
+
+      const res = await fetch(targetUrl);
+      if (res.ok) {
+        const result = await res.json();
+        const cloudProdList = result.products || (Array.isArray(result) ? result : null);
+
+        if (cloudProdList && Array.isArray(cloudProdList) && cloudProdList.length > 0) {
+          const sanitizedList = cloudProdList.map(p => ({
+            ...p,
+            unit: p.unit || 'sq.ft',
+            image: p.image || 'images/regal-white-marble.png'
+          }));
+
+          setAllProducts(sanitizedList);
+          try {
+            localStorage.setItem('mr_tiles_permanent_catalog_v12', JSON.stringify(sanitizedList));
+          } catch (e) {}
+        }
+      }
+    } catch (err) {}
+  };
+
+  // Fetch categories from server using non-destructive merge
+  const fetchLiveCategories = async () => {
+    try {
+      const targetUrl = window.location.hostname.includes('onrender.com') 
+        ? '/api/categories' 
+        : 'https://mr-tiles-sanitation.onrender.com/api/categories';
+
+      const res = await fetch(targetUrl);
+      if (res.ok) {
+        const result = await res.json();
+        if (result.categories && Array.isArray(result.categories) && result.categories.length > 0) {
+          setCategories(prev => {
+            const currentMap = new Map(prev.map(c => [c.id, c]));
+            result.categories.forEach(c => {
+              if (!currentMap.has(c.id)) {
+                currentMap.set(c.id, c);
+              }
+            });
+            const merged = Array.from(currentMap.values());
+            try {
+              localStorage.setItem('mr_tiles_custom_categories_v12', JSON.stringify(merged));
+            } catch (e) {}
+            return merged;
+          });
+        }
+      }
+    } catch (err) {}
+  };
+
+  // Run initial fetch on mount only to prevent overwriting active user edits
+  useEffect(() => {
+    fetchLiveCloudProducts();
+    fetchLiveCategories();
+  }, []);
+
   // Filter products based on active category
   useEffect(() => {
     let result = Array.isArray(allProducts) ? [...allProducts] : [];
@@ -183,9 +188,46 @@ export default function App() {
 
   // Handle Adding New Category Section from Admin
   const handleAddCategory = (newCat) => {
+    if (!newCat || !newCat.id) return;
+    const exists = categories.some(c => c.id === newCat.id);
+    if (exists) {
+      alert('Category already exists!');
+      return;
+    }
     const updatedCats = [...categories, newCat];
     saveCategoriesList(updatedCats);
     setActiveCategory(newCat.id);
+  };
+
+  // Handle Category Rename Customization
+  const handleUpdateCategory = async (catId, newLabel) => {
+    const updatedCats = categories.map(c => c.id === catId ? { ...c, label: newLabel } : c);
+    await saveCategoriesList(updatedCats);
+
+    // Update matching products category labels
+    const updatedProds = allProducts.map(p => p.category === catId ? { ...p, categoryLabel: newLabel } : p);
+    await saveProductsList(updatedProds);
+  };
+
+  // Handle Category Deletion
+  const handleDeleteCategory = async (catId) => {
+    if (!window.confirm('Are you sure you want to delete this category section? Products under this category will remain accessible under All Products.')) return;
+    
+    const updatedCats = categories.filter(c => c.id !== catId);
+    if (activeCategory === catId) setActiveCategory('all');
+    await saveCategoriesList(updatedCats);
+
+    // Clean products pointing to deleted category
+    const updatedProds = allProducts.map(p => p.category === catId ? { ...p, category: 'all', categoryLabel: 'All Products' } : p);
+    await saveProductsList(updatedProds);
+
+    const targetUrl = window.location.hostname.includes('onrender.com') 
+      ? `/api/categories/${catId}` 
+      : `https://mr-tiles-sanitation.onrender.com/api/categories/${catId}`;
+
+    try {
+      await fetch(targetUrl, { method: 'DELETE' });
+    } catch (err) {}
   };
 
   // Download PDF Catalog Generator
@@ -275,18 +317,6 @@ export default function App() {
       image: updatePayload.image || p.image || 'images/regal-white-marble.png'
     } : p);
     await saveProductsList(updatedList);
-
-    const targetUrl = window.location.hostname.includes('onrender.com') 
-      ? `/api/products/${id}` 
-      : `https://mr-tiles-sanitation.onrender.com/api/products/${id}`;
-
-    try {
-      await fetch(targetUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatePayload)
-      });
-    } catch (err) {}
   };
 
   // Admin Add Product
@@ -303,7 +333,7 @@ export default function App() {
     await saveProductsList(updatedList);
   };
 
-  // Admin Delete Product (Explicit HTTP DELETE + Full Sync)
+  // Admin Delete Product (Explicit HTTP DELETE + Master Sync)
   const handleDeleteProduct = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product from stock inventory?')) return;
     
@@ -330,36 +360,6 @@ export default function App() {
     setInquireProduct(product);
     setInquireNote(note);
     setShowInquireModal(true);
-  };
-
-  // Handle Category Rename Customization
-  const handleUpdateCategory = async (catId, newLabel) => {
-    const updatedCats = categories.map(c => c.id === catId ? { ...c, label: newLabel } : c);
-    await saveCategoriesList(updatedCats);
-
-    // Update matching products category labels
-    const updatedProds = allProducts.map(p => p.category === catId ? { ...p, categoryLabel: newLabel } : p);
-    await saveProductsList(updatedProds);
-  };
-
-  const handleDeleteCategory = async (catId) => {
-    if (!window.confirm('Are you sure you want to delete this category section? Products under this category will remain accessible under All Products.')) return;
-    
-    const updatedCats = categories.filter(c => c.id !== catId);
-    if (activeCategory === catId) setActiveCategory('all');
-    await saveCategoriesList(updatedCats);
-
-    // Clean products pointing to deleted category
-    const updatedProds = allProducts.map(p => p.category === catId ? { ...p, category: 'all', categoryLabel: 'All Products' } : p);
-    await saveProductsList(updatedProds);
-
-    const targetUrl = window.location.hostname.includes('onrender.com') 
-      ? `/api/categories/${catId}` 
-      : `https://mr-tiles-sanitation.onrender.com/api/categories/${catId}`;
-
-    try {
-      await fetch(targetUrl, { method: 'DELETE' });
-    } catch (err) {}
   };
 
   return (

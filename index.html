@@ -346,7 +346,7 @@
             if (res.ok) {
               const result = await res.json();
               const cloudProdList = result.products || (Array.isArray(result) ? result : null);
-              if (cloudProdList && Array.isArray(cloudProdList)) {
+              if (cloudProdList && Array.isArray(cloudProdList) && cloudProdList.length > 0) {
                 const sanitizedList = cloudProdList.map(p => ({
                   ...p,
                   unit: p.unit || 'sq.ft',
@@ -364,8 +364,6 @@
 
         useEffect(() => {
           fetchCloudProducts();
-          const timer = setInterval(fetchCloudProducts, 4000);
-          return () => clearInterval(timer);
         }, []);
 
         // Push Updates to State, Local & Cloud DB
