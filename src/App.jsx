@@ -188,15 +188,16 @@ export default function App() {
 
   // Handle Adding New Category Section from Admin
   const handleAddCategory = (newCat) => {
-    if (!newCat || !newCat.id) return;
-    const exists = categories.some(c => c.id === newCat.id);
-    if (exists) {
-      alert('Category already exists!');
-      return;
+    if (!newCat || !newCat.label) return;
+    let catId = newCat.id || newCat.label.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    if (!catId) catId = 'cat-' + Date.now();
+    if (categories.some(c => c.id === catId)) {
+      catId = `${catId}-${Date.now().toString().slice(-4)}`;
     }
-    const updatedCats = [...categories, newCat];
+    const finalCat = { id: catId, label: newCat.label.trim() };
+    const updatedCats = [...categories, finalCat];
     saveCategoriesList(updatedCats);
-    setActiveCategory(newCat.id);
+    setActiveCategory(finalCat.id);
   };
 
   // Handle Category Rename Customization

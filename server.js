@@ -10,11 +10,15 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Global CORS Middleware for Cross-Domain Device Sync
+// Global CORS & Strict No-Cache Middleware (Forces instant updates on all mobile & desktop browsers)
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-admin-token');
+  res.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.header('Pragma', 'no-cache');
+  res.header('Expires', '0');
+  res.header('Surrogate-Control', 'no-store');
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
@@ -25,8 +29,8 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.static(path.join(__dirname, 'dist')));
+app.use(express.static(path.join(__dirname, 'public'), { etag: false, maxAge: 0 }));
+app.use(express.static(path.join(__dirname, 'dist'), { etag: false, maxAge: 0 }));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
 // Paths to local data files
@@ -140,6 +144,7 @@ app.post('/api/admin/login', (req, res) => {
 
 // Category Endpoints
 app.get('/api/categories', (req, res) => {
+  res.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.json({ success: true, categories: getMasterCategories() });
 });
 
@@ -171,6 +176,7 @@ app.delete('/api/categories/:id', (req, res) => {
 
 // Public: Get Catalog Products
 app.get('/api/products', (req, res) => {
+  res.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   let products = getMasterProducts();
   const { category, search } = req.query;
 
@@ -238,6 +244,7 @@ app.delete('/api/products/:id', (req, res) => {
 });
 
 app.get('*', (req, res) => {
+  res.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   if (fs.existsSync(path.join(__dirname, 'dist', 'index.html'))) {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
   } else {
