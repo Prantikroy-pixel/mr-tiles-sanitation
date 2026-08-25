@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Edit2, Check, X, AlertTriangle, Settings, Save, Tag } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, X, AlertTriangle, Settings, Save, Tag, Upload, Image as ImageIcon } from 'lucide-react';
 import { compressImageFile } from '../utils/imageCompressor';
 
 export default function AdminPortal({ 
@@ -119,6 +119,8 @@ export default function AdminPortal({
     setNewName('');
     setNewPrice('');
     setNewStock('');
+    setNewDimensions('');
+    setNewFinish('');
     setNewDescription('');
     setNewImage('images/regal-white-marble.png');
   };
@@ -437,6 +439,80 @@ export default function AdminPortal({
                     style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }} 
                   />
                 </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Unit Type</label>
+                  <select 
+                    value={newUnit} 
+                    onChange={e => setNewUnit(e.target.value)} 
+                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
+                  >
+                    <option value="sq.ft">sq.ft</option>
+                    <option value="box">box</option>
+                    <option value="piece">piece</option>
+                    <option value="set">set</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Dimensions</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. 2x4 ft (600x1200 mm)" 
+                    value={newDimensions} 
+                    onChange={e => setNewDimensions(e.target.value)} 
+                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }} 
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Finish / Material</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. High Gloss Polished" 
+                  value={newFinish} 
+                  onChange={e => setNewFinish(e.target.value)} 
+                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }} 
+                />
+              </div>
+
+              {/* Upload Product Photo from Device */}
+              <div style={{ marginBottom: '0.85rem', background: '#f8fafc', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: '#0f172a', fontWeight: '600', marginBottom: '0.3rem' }}>
+                  <Upload size={14} style={{ verticalAlign: 'middle', marginRight: '0.3rem', color: '#2563eb' }} />
+                  Upload Product Photo from Device
+                </label>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageFileUpload}
+                  style={{ width: '100%', padding: '0.45rem', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.82rem', background: '#ffffff' }}
+                />
+                {isCompressing && (
+                  <div style={{ fontSize: '0.75rem', color: '#2563eb', marginTop: '0.3rem', fontWeight: '600' }}>
+                    ⏳ Compressing & optimizing photo...
+                  </div>
+                )}
+                {newImage && newImage.startsWith('data:image') && (
+                  <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <img src={newImage} alt="Preview" style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                    <span style={{ fontSize: '0.78rem', color: '#16a34a', fontWeight: '700' }}>✓ Custom Photo Loaded</span>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Description / Highlights</label>
+                <textarea 
+                  rows="2" 
+                  placeholder="Luxurious marble finish vitrified tiles..." 
+                  value={newDescription} 
+                  onChange={e => setNewDescription(e.target.value)} 
+                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a', fontFamily: 'inherit' }} 
+                />
               </div>
 
               <button type="submit" disabled={isCompressing} className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.65rem' }}>
