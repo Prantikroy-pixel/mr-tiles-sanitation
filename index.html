@@ -762,6 +762,7 @@
                         <>
                           <span style={{ fontWeight: '600', color: '#0f172a' }}>{c.label}</span>
                           <button className="btn-secondary" style={{ padding: '0.15rem 0.35rem', fontSize: '0.72rem', color: '#2563eb', border: 'none', background: '#f1f5f9' }} onClick={() => { setEditingCatId(c.id); setEditingCatLabel(c.label); }}>✏️ Edit</button>
+                          <button className="btn-secondary" style={{ padding: '0.15rem 0.35rem', fontSize: '0.72rem', color: '#c5221f', border: 'none', background: '#fce8e6' }} onClick={() => deleteCategory(c.id)}>🗑️ Delete</button>
                         </>
                       )}
                     </div>
