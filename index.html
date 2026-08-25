@@ -785,6 +785,16 @@
           setNewCatLabel('');
         };
 
+        const [editingCatId, setEditingCatId] = useState(null);
+        const [editingCatLabel, setEditingCatLabel] = useState('');
+
+        const handleSaveCatRename = (catId) => {
+          if (!editingCatLabel.trim()) return;
+          if (onUpdateCategory) onUpdateCategory(catId, editingCatLabel);
+          setEditingCatId(null);
+          setEditingCatLabel('');
+        };
+
         if (!adminToken) {
           return (
             <div style={{ padding: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
@@ -812,13 +822,41 @@
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
               <div>
                 <h1 style={{ fontSize: '1.5rem', color: '#0f172a' }}>Stock & Price Control Center</h1>
-                <p style={{ fontSize: '0.82rem', color: '#64748b' }}>Manage inventory, upload device photos, add categories, and export leads</p>
+                <p style={{ fontSize: '0.82rem', color: '#64748b' }}>Manage inventory, upload device photos, edit category names, and export leads</p>
               </div>
 
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <button className="btn-secondary" onClick={exportLeadsCsv} style={{ padding: '0.5rem 0.8rem', fontSize: '0.8rem' }}>📄 Export CSV / Excel</button>
                 <button className="btn-secondary" onClick={() => setShowAddCatModal(true)} style={{ padding: '0.5rem 0.8rem', fontSize: '0.8rem' }}>➕ Add Category</button>
                 <button className="btn-primary" onClick={() => setShowAddModal(true)} style={{ padding: '0.5rem 0.8rem', fontSize: '0.8rem' }}>➕ Add Tile / Stock</button>
+              </div>
+            </div>
+
+            {/* Category Quick Rename Bar */}
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '1.25rem' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#0f172a', marginBottom: '0.5rem' }}>
+                🏷️ Edit Category Names (Click ✏️ to rename existing categories)
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {categories.filter(c => c.id !== 'all').map(c => {
+                  const isEditingThis = editingCatId === c.id;
+                  return (
+                    <div key={c.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}>
+                      {isEditingThis ? (
+                        <>
+                          <input type="text" value={editingCatLabel} onChange={e => setEditingCatLabel(e.target.value)} style={{ padding: '0.15rem 0.3rem', width: '130px', fontSize: '0.8rem', fontWeight: 'bold', color: '#0f172a' }} />
+                          <button className="btn-secondary" style={{ padding: '0.15rem 0.4rem', fontSize: '0.75rem', background: '#16a34a', color: '#fff', border: 'none' }} onClick={() => handleSaveCatRename(c.id)}>💾 Save</button>
+                          <button className="btn-secondary" style={{ padding: '0.15rem 0.4rem', fontSize: '0.75rem' }} onClick={() => setEditingCatId(null)}>✕</button>
+                        </>
+                      ) : (
+                        <>
+                          <span style={{ fontWeight: '600', color: '#0f172a' }}>{c.label}</span>
+                          <button className="btn-secondary" style={{ padding: '0.15rem 0.35rem', fontSize: '0.72rem', color: '#2563eb', border: 'none', background: '#f1f5f9' }} onClick={() => { setEditingCatId(c.id); setEditingCatLabel(c.label); }}>✏️ Edit</button>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
