@@ -25,6 +25,10 @@ export default function AdminPortal({
   const [editStock, setEditStock] = useState('');
   const [editUnit, setEditUnit] = useState('sq.ft');
 
+  // Photo Management Modal States for Existing Items
+  const [photoManageProduct, setPhotoManageProduct] = useState(null);
+  const [photoManageList, setPhotoManageList] = useState([]);
+
   // Add Product Modal States
   const [showAddModal, setShowAddModal] = useState(false);
   const [newName, setNewName] = useState('');
@@ -46,7 +50,7 @@ export default function AdminPortal({
   const [editingCatId, setEditingCatId] = useState(null);
   const [editingCatLabel, setEditingCatLabel] = useState('');
 
-  // Handle Multiple Photo Upload with HTML5 Canvas Compression
+  // Handle Multiple Photo Upload for NEW Product
   const handleMultipleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
@@ -65,6 +69,57 @@ export default function AdminPortal({
     } finally {
       setIsCompressing(false);
     }
+  };
+
+  // Handle Adding Photos to EXISTING Product
+  const openManagePhotosModal = (p) => {
+    setPhotoManageProduct(p);
+    const existing = (p.images && Array.isArray(p.images) && p.images.length > 0)
+      ? p.images
+      : [p.image || 'images/regal-white-marble.png'];
+    setPhotoManageList([...existing]);
+  };
+
+  const handleAddPhotosToExisting = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    try {
+      setIsCompressing(true);
+      const compressedList = await Promise.all(
+        files.map(file => compressImageFile(file, 800, 800, 0.75))
+      );
+      setPhotoManageList(prev => [...prev, ...compressedList]);
+    } catch (err) {
+      alert('Failed to process image files. Please try again.');
+    } finally {
+      setIsCompressing(false);
+    }
+  };
+
+  const removePhotoFromExistingList = (idxToRemove) => {
+    if (photoManageList.length <= 1) {
+      alert('A product must have at least 1 photo!');
+      return;
+    }
+    setPhotoManageList(prev => prev.filter((_, idx) => idx !== idxToRemove));
+  };
+
+  const saveProductPhotos = () => {
+    if (!photoManageProduct) return;
+    if (photoManageList.length === 0) {
+      alert('Please include at least one photo!');
+      return;
+    }
+
+    onUpdateProduct(photoManageProduct.id, {
+      ...photoManageProduct,
+      image: photoManageList[0],
+      images: photoManageList
+    });
+
+    setPhotoManageProduct(null);
+    setPhotoManageList([]);
   };
 
   const removeImageAtIndex = (idxToRemove) => {
@@ -308,7 +363,7 @@ export default function AdminPortal({
 
       {/* Mobile Touch Responsive Table */}
       <div className="admin-table-wrap" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        <table className="admin-table" style={{ width: '100%', minWidth: '550px' }}>
+        <table className="admin-table" style={{ width: '100%', minWidth: '600px' }}>
           <thead>
             <tr>
               <th>Item / Image</th>
@@ -323,6 +378,7 @@ export default function AdminPortal({
               const isEditing = editingId === p.id;
               const displayUnit = p.unit || 'sq.ft';
               const displayImg = (p.images && p.images.length > 0) ? p.images[0] : (p.image || 'images/regal-white-marble.png');
+              const photoCount = (p.images && Array.isArray(p.images)) ? p.images.length : 1;
 
               return (
                 <tr key={p.id}>
@@ -345,7 +401,7 @@ export default function AdminPortal({
                           <div style={{ fontWeight: 'bold', color: '#0f172a', fontSize: '0.85rem' }}>{p.name}</div>
                         )}
                         <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                          {p.dimensions} {p.images && p.images.length > 1 ? `• ${p.images.length} photos` : ''}
+                          {p.dimensions} • <span style={{ color: '#2563eb', fontWeight: '600' }}>{photoCount} photo{photoCount > 1 ? 's' : ''}</span>
                         </div>
                       </div>
                     </div>
@@ -382,7 +438,10 @@ export default function AdminPortal({
                         </>
                       ) : (
                         <>
-                          <button type="button" className="btn-icon" style={{ padding: '0.4rem 0.6rem', border: '1px solid #cbd5e1', borderRadius: '4px', cursor: 'pointer', background: '#f8fafc' }} onClick={() => startEdit(p)} title="Edit">
+                          <button type="button" className="btn-icon" style={{ padding: '0.4rem 0.6rem', border: '1px solid #bfdbfe', background: '#eff6ff', color: '#2563eb', borderRadius: '4px', cursor: 'pointer' }} onClick={() => openManagePhotosModal(p)} title="Add or Manage Photos">
+                            <ImageIcon size={16} />
+                          </button>
+                          <button type="button" className="btn-icon" style={{ padding: '0.4rem 0.6rem', border: '1px solid #cbd5e1', borderRadius: '4px', cursor: 'pointer', background: '#f8fafc' }} onClick={() => startEdit(p)} title="Edit Price / Stock">
                             <Edit2 size={16} />
                           </button>
                           <button type="button" className="btn-icon delete" style={{ padding: '0.4rem 0.6rem', border: 'none', background: '#fee2e2', color: '#c5221f', borderRadius: '4px', cursor: 'pointer' }} onClick={() => onDeleteProduct(p.id)} title="Delete Item">
@@ -398,6 +457,74 @@ export default function AdminPortal({
           </tbody>
         </table>
       </div>
+
+      {/* Modal: Manage & Add Photos for EXISTING Tile / Item */}
+      {photoManageProduct && (
+        <div className="modal-overlay" onClick={() => setPhotoManageProduct(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px', width: '92%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <button type="button" className="modal-close" onClick={() => setPhotoManageProduct(null)}>✕</button>
+
+            <h3 style={{ fontSize: '1.2rem', color: '#0f172a', marginBottom: '0.2rem' }}>Manage Photos: {photoManageProduct.name}</h3>
+            <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '1rem' }}>Add multiple photos from your device for customers to scroll through</p>
+
+            {/* File Picker */}
+            <div style={{ marginBottom: '1rem', background: '#f8fafc', padding: '0.85rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', color: '#0f172a', fontWeight: '600', marginBottom: '0.35rem' }}>
+                <Upload size={14} style={{ verticalAlign: 'middle', marginRight: '0.3rem', color: '#2563eb' }} />
+                Upload Extra Photos from Device
+              </label>
+              <input 
+                type="file" 
+                multiple
+                accept="image/*" 
+                onChange={handleAddPhotosToExisting}
+                style={{ width: '100%', padding: '0.45rem', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.82rem', background: '#ffffff' }}
+              />
+              {isCompressing && (
+                <div style={{ fontSize: '0.75rem', color: '#2563eb', marginTop: '0.35rem', fontWeight: '600' }}>
+                  ⏳ Compressing & optimizing photos...
+                </div>
+              )}
+            </div>
+
+            {/* Existing Photo Gallery Preview */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ fontSize: '0.8rem', color: '#0f172a', fontWeight: '700', marginBottom: '0.5rem' }}>
+                Current Photos ({photoManageList.length}):
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '0.6rem' }}>
+                {photoManageList.map((img, idx) => (
+                  <div key={idx} style={{ position: 'relative', borderRadius: '6px', overflow: 'hidden', border: idx === 0 ? '2px solid #2563eb' : '1px solid #cbd5e1', background: '#f8fafc' }}>
+                    <img src={img} alt={`Tile Photo ${idx+1}`} style={{ width: '100%', height: '75px', objectFit: 'cover' }} />
+                    <button 
+                      type="button"
+                      onClick={() => removePhotoFromExistingList(idx)}
+                      style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(197, 34, 31, 0.9)', color: '#fff', border: 'none', borderRadius: '50%', width: '20px', height: '20px', fontSize: '11px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                      title="Remove this photo"
+                    >
+                      ✕
+                    </button>
+                    {idx === 0 && (
+                      <span style={{ position: 'absolute', bottom: '0', left: '0', right: '0', background: '#2563eb', color: '#fff', fontSize: '0.62rem', textAlign: 'center', fontWeight: '700', padding: '1px 0' }}>
+                        COVER
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button type="button" className="btn-secondary" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setPhotoManageProduct(null)}>
+                Cancel
+              </button>
+              <button type="button" className="btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={saveProductPhotos}>
+                Save Photos
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add New Product Modal */}
       {showAddModal && (

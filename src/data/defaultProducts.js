@@ -12,6 +12,11 @@ export const DEFAULT_PRODUCTS = [
     "finish": "High Gloss Polished",
     "material": "Vitrified Porcelain",
     "image": "images/regal-white-marble.png",
+    "images": [
+      "images/regal-white-marble.png",
+      "images/moroccan-grey.png",
+      "images/wall-hung-basin.png"
+    ],
     "description": "Luxurious white marble finish vitrified tiles with elegant gold and subtle grey veining.",
     "colors": [
       { "name": "Carrara White", "hex": "#ffffff" },
@@ -32,6 +37,11 @@ export const DEFAULT_PRODUCTS = [
     "finish": "Satin Matt Anti-Skid",
     "material": "Glazed Vitrified",
     "image": "images/moroccan-grey.png",
+    "images": [
+      "images/moroccan-grey.png",
+      "images/regal-white-marble.png",
+      "images/smart-commode.png"
+    ],
     "description": "Contemporary grey porcelain floor tile with subtle tactile pattern. Anti-skid and durable.",
     "colors": [
       { "name": "Slate Grey", "hex": "#64748b" },
@@ -52,6 +62,11 @@ export const DEFAULT_PRODUCTS = [
     "finish": "Glossy Ceramic White",
     "material": "Vitreous China Ceramic",
     "image": "images/wall-hung-basin.png",
+    "images": [
+      "images/wall-hung-basin.png",
+      "images/smart-commode.png",
+      "images/regal-white-marble.png"
+    ],
     "description": "Minimalist wall-mounted wash basin with integrated tap hole and overflow ring.",
     "colors": [
       { "name": "Pure White", "hex": "#ffffff" },
@@ -71,6 +86,11 @@ export const DEFAULT_PRODUCTS = [
     "finish": "Antibacterial Glaze",
     "material": "Dual Flush Ceramic",
     "image": "images/smart-commode.png",
+    "images": [
+      "images/smart-commode.png",
+      "images/wall-hung-basin.png",
+      "images/moroccan-grey.png"
+    ],
     "description": "Premium dual-flush rimless smart commode with soft-close seat lid.",
     "colors": [
       { "name": "Gloss White", "hex": "#ffffff" },
@@ -79,42 +99,25 @@ export const DEFAULT_PRODUCTS = [
   },
   {
     "id": "prod_5",
-    "name": "Onyx Gold Wall Tile",
-    "category": "wall-tiles",
-    "categoryLabel": "Wall Tiles",
-    "price": 72,
-    "unit": "sq.ft",
-    "stock": 600,
-    "minStock": 80,
-    "dimensions": "1x2 ft (300x600 mm)",
-    "finish": "High Gloss Mirror Finish",
-    "material": "Ceramic Wall Tile",
-    "image": "images/regal-white-marble.png",
-    "description": "Rich onyx crystal pattern wall tile designed for luxury bathroom accent walls.",
-    "colors": [
-      { "name": "Crystal Gold", "hex": "#fde047" },
-      { "name": "Emerald Onyx", "hex": "#a7f3d0" },
-      { "name": "Ocean Blue", "hex": "#bae6fd" }
-    ]
-  },
-  {
-    "id": "prod_6",
-    "name": "Luxury Teak Finish Designer Door",
+    "name": "Royal Teak Designer Door",
     "category": "doors",
     "categoryLabel": "Doors",
-    "price": 8500,
+    "price": 12500,
     "unit": "piece",
-    "stock": 15,
-    "minStock": 3,
-    "dimensions": "7x3 ft (84x36 in)",
-    "finish": "Waterproof WPC Teak Finish",
-    "material": "Wood Polymer Composite",
-    "image": "images/moroccan-grey.png",
-    "description": "Termite proof, 100% waterproof heavy duty WPC designer entry door.",
+    "stock": 8,
+    "minStock": 2,
+    "dimensions": "3x7 ft (900x2100 mm)",
+    "finish": "Natural Teak Polish",
+    "material": "Solid Teak Wood",
+    "image": "images/regal-white-marble.png",
+    "images": [
+      "images/regal-white-marble.png",
+      "images/moroccan-grey.png"
+    ],
+    "description": "Premium carved solid teak wood door with waterproof protective polish for main entrance.",
     "colors": [
-      { "name": "Burma Teak", "hex": "#78350f" },
-      { "name": "Walnut Dark", "hex": "#451a03" },
-      { "name": "Classic Oak", "hex": "#92400e" }
+      { "name": "Teak Brown", "hex": "#78350f" },
+      { "name": "Walnut Dark", "hex": "#451a03" }
     ]
   }
 ];
