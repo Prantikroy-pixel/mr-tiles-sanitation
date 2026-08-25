@@ -1,0 +1,7 @@
+[
+  { "id": "all", "label": "All Products" },
+  { "id": "floor-tiles", "label": "Floor Tiles" },
+  { "id": "wall-tiles", "label": "Wall Tiles" },
+  { "id": "sanitary", "label": "Sanitary" },
+  { "id": "doors", "label": "Doors" }
+]

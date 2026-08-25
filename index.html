@@ -431,24 +431,51 @@
           } catch(e) {}
         };
 
-        // Category Rename & Delete Handlers
-        const updateCategory = (catId, newLabel) => {
-          const updatedCats = categories.map(c => c.id === catId ? { ...c, label: newLabel } : c);
+        // Category Cloud Sync Handlers
+        const pushCategoriesToCloud = async (updatedCats) => {
           setCategories(updatedCats);
           try {
             localStorage.setItem('mr_tiles_custom_categories_v10', JSON.stringify(updatedCats));
           } catch(e) {}
 
+          const catUrl = window.location.hostname.includes('onrender.com') 
+            ? '/api/categories' 
+            : 'https://mr-tiles-sanitation.onrender.com/api/categories';
+
+          try {
+            await fetch(catUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ categories: updatedCats })
+            });
+          } catch(e) {}
+        };
+
+        const addCategory = (newCat) => {
+          const updatedCats = [...categories, newCat];
+          pushCategoriesToCloud(updatedCats);
+        };
+
+        const updateCategory = (catId, newLabel) => {
+          const updatedCats = categories.map(c => c.id === catId ? { ...c, label: newLabel } : c);
+          pushCategoriesToCloud(updatedCats);
+
           const updatedProds = products.map(p => p.category === catId ? { ...p, categoryLabel: newLabel } : p);
           pushToCloud(updatedProds);
         };
 
-        const deleteCategory = (catId) => {
-          if (!window.confirm('Delete category section?')) return;
+        const deleteCategory = async (catId) => {
+          if (!window.confirm('Are you sure you want to delete this category section? Products under this category will remain accessible under All Products.')) return;
           const updatedCats = categories.filter(c => c.id !== catId);
-          setCategories(updatedCats);
+          if (activeCategory === catId) setActiveCategory('all');
+          pushCategoriesToCloud(updatedCats);
+
+          const targetUrl = window.location.hostname.includes('onrender.com') 
+            ? `/api/categories/${catId}` 
+            : `https://mr-tiles-sanitation.onrender.com/api/categories/${catId}`;
+
           try {
-            localStorage.setItem('mr_tiles_custom_categories_v10', JSON.stringify(updatedCats));
+            await fetch(targetUrl, { method: 'DELETE' });
           } catch(e) {}
         };
 
@@ -461,7 +488,7 @@
             {currentView === 'store' ? (
               <CustomerStore products={filtered} categories={categories} activeCategory={activeCategory} setActiveCategory={setActiveCategory} onOpenCalc={p => { setCalcProduct(p); setShowCalcModal(true); }} onInquire={(p, note) => { setInquireProduct(p); setInquireNote(note || ''); setShowInquireModal(true); }} onDownloadPdf={() => window.print()} />
             ) : (
-              <AdminPortal products={products} categories={categories} adminToken={adminToken} onLogin={token => setAdminToken(token)} onUpdateProduct={(id, payload) => pushToCloud(products.map(p => p.id === id ? { ...p, ...payload, unit: payload.unit || p.unit || 'sq.ft' } : p))} onAddProduct={p => pushToCloud([{ id: 'prod_' + Date.now(), unit: p.unit || 'sq.ft', image: p.image || 'images/regal-white-marble.png', ...p }, ...products])} onDeleteProduct={deleteProduct} onAddCategory={c => setCategories(prev => [...prev, c])} onUpdateCategory={updateCategory} onDeleteCategory={deleteCategory} />
+              <AdminPortal products={products} categories={categories} adminToken={adminToken} onLogin={token => setAdminToken(token)} onUpdateProduct={(id, payload) => pushToCloud(products.map(p => p.id === id ? { ...p, ...payload, unit: payload.unit || p.unit || 'sq.ft' } : p))} onAddProduct={p => pushToCloud([{ id: 'prod_' + Date.now(), unit: p.unit || 'sq.ft', image: p.image || 'images/regal-white-marble.png', ...p }, ...products])} onDeleteProduct={deleteProduct} onAddCategory={addCategory} onUpdateCategory={updateCategory} onDeleteCategory={deleteCategory} />
             )}
 
             {/* Modals rendered cleanly */}

@@ -90,10 +90,53 @@ export default function App() {
     } catch (err) {}
   };
 
+  // Clean Server Category Sync Logic
+  const fetchLiveCategories = async () => {
+    try {
+      const targetUrl = window.location.hostname.includes('onrender.com') 
+        ? '/api/categories' 
+        : 'https://mr-tiles-sanitation.onrender.com/api/categories';
+
+      const res = await fetch(targetUrl);
+      if (res.ok) {
+        const result = await res.json();
+        if (result.categories && Array.isArray(result.categories)) {
+          setCategories(result.categories);
+          try {
+            localStorage.setItem('mr_tiles_custom_categories_v10', JSON.stringify(result.categories));
+          } catch (e) {}
+        }
+      }
+    } catch (err) {}
+  };
+
+  const saveCategoriesList = async (updatedCats) => {
+    setCategories(updatedCats);
+    try {
+      localStorage.setItem('mr_tiles_custom_categories_v10', JSON.stringify(updatedCats));
+    } catch (e) {}
+
+    const targetUrl = window.location.hostname.includes('onrender.com') 
+      ? '/api/categories' 
+      : 'https://mr-tiles-sanitation.onrender.com/api/categories';
+
+    try {
+      await fetch(targetUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categories: updatedCats })
+      });
+    } catch (err) {}
+  };
+
   // Poll central Render backend server every 4 seconds for real-time cross-device updates
   useEffect(() => {
     fetchLiveCloudProducts();
-    const timer = setInterval(fetchLiveCloudProducts, 4000);
+    fetchLiveCategories();
+    const timer = setInterval(() => {
+      fetchLiveCloudProducts();
+      fetchLiveCategories();
+    }, 4000);
     return () => clearInterval(timer);
   }, []);
 
@@ -168,11 +211,8 @@ export default function App() {
   // Handle Adding New Category Section from Admin
   const handleAddCategory = (newCat) => {
     const updatedCats = [...categories, newCat];
-    setCategories(updatedCats);
+    saveCategoriesList(updatedCats);
     setActiveCategory(newCat.id);
-    try {
-      localStorage.setItem('mr_tiles_custom_categories_v10', JSON.stringify(updatedCats));
-    } catch (e) {}
   };
 
   // Download PDF Catalog Generator
@@ -318,23 +358,27 @@ export default function App() {
   // Handle Category Rename Customization
   const handleUpdateCategory = (catId, newLabel) => {
     const updatedCats = categories.map(c => c.id === catId ? { ...c, label: newLabel } : c);
-    setCategories(updatedCats);
-    try {
-      localStorage.setItem('mr_tiles_custom_categories_v10', JSON.stringify(updatedCats));
-    } catch (e) {}
+    saveCategoriesList(updatedCats);
 
     // Update matching products category labels
     const updatedProds = allProducts.map(p => p.category === catId ? { ...p, categoryLabel: newLabel } : p);
     saveProductsList(updatedProds);
   };
 
-  const handleDeleteCategory = (catId) => {
-    if (!window.confirm('Delete this category section? Products will remain accessible.')) return;
+  const handleDeleteCategory = async (catId) => {
+    if (!window.confirm('Are you sure you want to delete this category section? Products under this category will remain accessible under All Products.')) return;
+    
     const updatedCats = categories.filter(c => c.id !== catId);
-    setCategories(updatedCats);
+    if (activeCategory === catId) setActiveCategory('all');
+    saveCategoriesList(updatedCats);
+
+    const targetUrl = window.location.hostname.includes('onrender.com') 
+      ? `/api/categories/${catId}` 
+      : `https://mr-tiles-sanitation.onrender.com/api/categories/${catId}`;
+
     try {
-      localStorage.setItem('mr_tiles_custom_categories_v10', JSON.stringify(updatedCats));
-    } catch (e) {}
+      await fetch(targetUrl, { method: 'DELETE' });
+    } catch (err) {}
   };
 
   return (

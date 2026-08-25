@@ -29,11 +29,21 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'dist')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
-// Path to local data file
+// Paths to local data files
 const DATA_FILE = path.join(__dirname, 'data', 'products.json');
+const CATEGORIES_FILE = path.join(__dirname, 'data', 'categories.json');
 
-// In-Memory Master Cache for 100% Instant Persistence
+const DEFAULT_CATEGORIES = [
+  { id: 'all', label: 'All Products' },
+  { id: 'floor-tiles', label: 'Floor Tiles' },
+  { id: 'wall-tiles', label: 'Wall Tiles' },
+  { id: 'sanitary', label: 'Sanitary' },
+  { id: 'doors', label: 'Doors' }
+];
+
+// In-Memory Master Caches
 let inMemoryCatalog = null;
+let inMemoryCategories = null;
 
 // Helper to read local products from disk
 function getLocalDiskProducts() {
@@ -41,7 +51,7 @@ function getLocalDiskProducts() {
     if (fs.existsSync(DATA_FILE)) {
       const content = fs.readFileSync(DATA_FILE, 'utf-8');
       const parsed = JSON.parse(content);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed;
       }
     }
@@ -65,23 +75,50 @@ function saveLocalDiskProducts(products) {
 
 // Master Helper to Get Products (Memory -> Local File)
 function getMasterProducts() {
-  if (inMemoryCatalog && Array.isArray(inMemoryCatalog) && inMemoryCatalog.length > 0) {
+  if (inMemoryCatalog !== null && Array.isArray(inMemoryCatalog)) {
     return inMemoryCatalog;
   }
-
   const localList = getLocalDiskProducts();
-  if (localList && localList.length > 0) {
-    inMemoryCatalog = localList;
-    return localList;
-  }
-
-  return [];
+  inMemoryCatalog = localList;
+  return localList;
 }
 
 // Master Helper to Save Products (Memory + Local File)
 function saveMasterProducts(products) {
   inMemoryCatalog = products;
   saveLocalDiskProducts(products);
+  return true;
+}
+
+// Master Helper to Get Categories
+function getMasterCategories() {
+  if (inMemoryCategories !== null && Array.isArray(inMemoryCategories)) {
+    return inMemoryCategories;
+  }
+  try {
+    if (fs.existsSync(CATEGORIES_FILE)) {
+      const content = fs.readFileSync(CATEGORIES_FILE, 'utf-8');
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        inMemoryCategories = parsed;
+        return parsed;
+      }
+    }
+  } catch (err) {}
+  inMemoryCategories = DEFAULT_CATEGORIES;
+  return DEFAULT_CATEGORIES;
+}
+
+// Master Helper to Save Categories
+function saveMasterCategories(categories) {
+  inMemoryCategories = categories;
+  try {
+    const dir = path.dirname(CATEGORIES_FILE);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(CATEGORIES_FILE, JSON.stringify(categories, null, 2), 'utf-8');
+  } catch (err) {}
   return true;
 }
 
@@ -99,6 +136,37 @@ app.post('/api/admin/login', (req, res) => {
     success: false,
     message: 'Invalid credentials'
   });
+});
+
+// Category Endpoints
+app.get('/api/categories', (req, res) => {
+  res.json({ success: true, categories: getMasterCategories() });
+});
+
+app.post('/api/categories', (req, res) => {
+  let newCats = req.body;
+  if (newCats && newCats.categories && Array.isArray(newCats.categories)) {
+    newCats = newCats.categories;
+  }
+  if (Array.isArray(newCats)) {
+    saveMasterCategories(newCats);
+    return res.json({ success: true, categories: newCats });
+  }
+  if (req.body && req.body.id && req.body.label) {
+    const current = getMasterCategories();
+    const updated = [...current, { id: req.body.id, label: req.body.label }];
+    saveMasterCategories(updated);
+    return res.json({ success: true, categories: updated });
+  }
+  res.status(400).json({ error: 'Invalid payload' });
+});
+
+app.delete('/api/categories/:id', (req, res) => {
+  const catId = req.params.id;
+  const current = getMasterCategories();
+  const updated = current.filter(c => c.id !== catId);
+  saveMasterCategories(updated);
+  res.json({ success: true, categories: updated });
 });
 
 // Public: Get Catalog Products
@@ -122,7 +190,7 @@ app.get('/api/products', (req, res) => {
   res.json({ success: true, count: products.length, products });
 });
 
-// Public/Admin Update Product Catalog with Server-Side Union Merge
+// Public/Admin Update Product Catalog
 app.post('/api/products', (req, res) => {
   let currentProducts = getMasterProducts();
   let incoming = req.body;
@@ -132,35 +200,8 @@ app.post('/api/products', (req, res) => {
   }
 
   if (Array.isArray(incoming)) {
-    const productMap = new Map();
-
-    // 1. Load existing server items first
-    currentProducts.forEach(p => {
-      if (p && p.id) {
-        productMap.set(p.id, {
-          ...p,
-          unit: p.unit || 'sq.ft',
-          image: p.image || 'images/regal-white-marble.png'
-        });
-      }
-    });
-
-    // 2. Union merge incoming items by ID
-    incoming.forEach(p => {
-      if (p && p.id) {
-        const existing = productMap.get(p.id) || {};
-        productMap.set(p.id, {
-          ...existing,
-          ...p,
-          unit: p.unit || existing.unit || 'sq.ft',
-          image: p.image || existing.image || 'images/regal-white-marble.png'
-        });
-      }
-    });
-
-    const mergedList = Array.from(productMap.values());
-    saveMasterProducts(mergedList);
-    return res.json({ success: true, products: mergedList });
+    saveMasterProducts(incoming);
+    return res.json({ success: true, products: incoming });
   }
 
   if (req.body && req.body.name) {
@@ -171,7 +212,7 @@ app.post('/api/products', (req, res) => {
       ...req.body
     };
     currentProducts.unshift(newProduct);
-    saveMasterProducts(mergedList);
+    saveMasterProducts(currentProducts);
     return res.json({ success: true, product: newProduct, products: currentProducts });
   }
 
@@ -179,23 +220,17 @@ app.post('/api/products', (req, res) => {
 });
 
 app.put('/api/products', (req, res) => {
-  let currentProducts = getMasterProducts();
   let incoming = req.body;
-
   if (incoming && incoming.products && Array.isArray(incoming.products)) {
     incoming = incoming.products;
   }
 
   if (Array.isArray(incoming)) {
-    const productMap = new Map();
-    currentProducts.forEach(p => { if (p && p.id) productMap.set(p.id, p); });
-    incoming.forEach(p => { if (p && p.id) productMap.set(p.id, { ...productMap.get(p.id), ...p }); });
-    const mergedList = Array.from(productMap.values());
-    saveMasterProducts(mergedList);
-    return res.json({ success: true, products: mergedList });
+    saveMasterProducts(incoming);
+    return res.json({ success: true, products: incoming });
   }
 
-  res.json({ success: true });
+  res.json({ success: true, products: getMasterProducts() });
 });
 
 // Explicit Item Delete Route
