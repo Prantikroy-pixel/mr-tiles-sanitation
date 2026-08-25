@@ -219,6 +219,15 @@ app.post('/api/products', (req, res) => {
   res.json({ success: true, products: currentProducts });
 });
 
+app.put('/api/products/:id', (req, res) => {
+  const { id } = req.params;
+  const updatePayload = req.body;
+  let currentProducts = getMasterProducts();
+  const updatedList = currentProducts.map(p => p.id === id ? { ...p, ...updatePayload } : p);
+  saveMasterProducts(updatedList);
+  res.json({ success: true, products: updatedList });
+});
+
 app.put('/api/products', (req, res) => {
   let incoming = req.body;
   if (incoming && incoming.products && Array.isArray(incoming.products)) {

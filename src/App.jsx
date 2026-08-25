@@ -302,6 +302,18 @@ export default function App() {
       image: updatePayload.image || p.image || 'images/regal-white-marble.png'
     } : p);
     await saveProductsList(updatedList);
+
+    const targetUrl = window.location.hostname.includes('onrender.com') 
+      ? `/api/products/${id}` 
+      : `https://mr-tiles-sanitation.onrender.com/api/products/${id}`;
+
+    try {
+      await fetch(targetUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatePayload)
+      });
+    } catch (err) {}
   };
 
   // Admin Add Product
@@ -318,28 +330,20 @@ export default function App() {
     await saveProductsList(updatedList);
   };
 
-  // Admin Delete Product (Explicit HTTP DELETE)
+  // Admin Delete Product (Explicit HTTP DELETE + Full Sync)
   const handleDeleteProduct = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product from stock inventory?')) return;
     
     const updatedList = allProducts.filter(p => p.id !== id);
-    setAllProducts(updatedList);
-
-    try {
-      localStorage.setItem('mr_tiles_permanent_catalog_v12', JSON.stringify(updatedList));
-    } catch (e) {}
+    await saveProductsList(updatedList);
 
     const targetUrl = window.location.hostname.includes('onrender.com') 
       ? `/api/products/${id}` 
       : `https://mr-tiles-sanitation.onrender.com/api/products/${id}`;
 
     try {
-      await fetch(targetUrl, {
-        method: 'DELETE'
-      });
-    } catch (err) {
-      console.error('Failed to delete item from server:', err);
-    }
+      await fetch(targetUrl, { method: 'DELETE' });
+    } catch (err) {}
   };
 
   // Open Calculator Modal
