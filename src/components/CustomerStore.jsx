@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calculator, MapPin, Phone, Clock, Download } from 'lucide-react';
+import { Calculator, MapPin, Phone, Clock, Download, Mail } from 'lucide-react';
 
 export default function CustomerStore({ 
   products, 
@@ -10,12 +10,6 @@ export default function CustomerStore({
   onInquire, 
   onDownloadPdf 
 }) {
-  const [selectedColors, setSelectedColors] = useState({});
-
-  const handleColorSelect = (productId, colorName) => {
-    setSelectedColors(prev => ({ ...prev, [productId]: colorName }));
-  };
-
   return (
     <main>
       {/* Hero Header */}
@@ -35,7 +29,7 @@ export default function CustomerStore({
             <Calculator size={16} /> Tile & Budget Calculator
           </button>
           <button className="btn-secondary" onClick={onDownloadPdf}>
-            <Download size={16} /> Download Catalog (PDF)
+            <Download size={16} /> Download Catalogue (PDF)
           </button>
         </div>
       </section>
@@ -55,68 +49,62 @@ export default function CustomerStore({
         </div>
       </div>
 
-      {/* Catalog Grid */}
+      {/* Catalogue Grid */}
       <section className="catalog-section">
         {products.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '3.5rem 1rem', color: 'var(--text-muted)' }}>
-            <p style={{ fontSize: '1.1rem' }}>No products found in this category.</p>
-            <button className="btn-secondary" style={{ marginTop: '1rem' }} onClick={() => setActiveCategory('all')}>
-              Reset Category Filter
-            </button>
+          <div style={{ textAlign: 'center', padding: '4rem 1rem', background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            <h3 style={{ color: '#0f172a', fontSize: '1.2rem', marginBottom: '0.5rem' }}>No Products in this Category</h3>
+            <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Please select another category or add stock from the Admin Portal.</p>
           </div>
         ) : (
-          <div className="product-grid">
+          <div className="products-grid">
             {products.map(prod => {
-              const isLowStock = prod.stock > 0 && prod.stock <= (prod.minStock || 10);
-              const isOutOfStock = prod.stock <= 0;
-              const stockStatusClass = isOutOfStock ? 'out-of-stock' : (isLowStock ? 'low-stock' : 'in-stock');
-              const stockLabel = isOutOfStock ? 'Out of Stock' : (isLowStock ? `Low Stock (${prod.stock} left)` : `In Stock (${prod.stock} ${prod.unit})`);
-              const activeColorName = selectedColors[prod.id] || (prod.colors && prod.colors[0] ? prod.colors[0].name : '');
+              const displayUnit = prod.unit || 'sq.ft';
+              const displayImg = prod.image || 'images/regal-white-marble.png';
 
               return (
                 <div key={prod.id} className="product-card">
                   <div className="card-image-wrap">
                     <img 
-                      src={prod.image} 
+                      src={displayImg} 
                       alt={prod.name} 
-                      className="card-img" 
-                      loading="lazy"
-                      onError={(e) => { e.target.src = 'images/regal-white-marble.png'; }} 
+                      onError={e => e.target.src = 'images/regal-white-marble.png'}
                     />
-                    <div className={`stock-badge ${stockStatusClass}`}>
-                      {stockLabel}
-                    </div>
-                    <div className="category-tag">
+                    <span className="category-badge">
                       {prod.categoryLabel || prod.category}
-                    </div>
+                    </span>
                   </div>
 
-                  <div className="card-body">
-                    <h3 className="card-title">{prod.name}</h3>
-                    <p className="card-specs">
-                      {prod.dimensions} • {prod.finish}
-                    </p>
+                  <div className="card-content">
+                    <h3 className="product-name">{prod.name}</h3>
+                    <p className="product-desc">{prod.description}</p>
 
-
-
-                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.85rem', flex: 1 }}>
-                      {prod.description}
-                    </p>
-
-                    <div className="card-price-row">
-                      <div>
-                        <span className="price-main">₹{prod.price.toLocaleString('en-IN')}</span>
-                        <span className="price-unit"> / {prod.unit}</span>
+                    <div className="specs-list">
+                      <div className="spec-item">
+                        <span>Dimensions:</span> <strong>{prod.dimensions || 'Standard'}</strong>
+                      </div>
+                      <div className="spec-item">
+                        <span>Finish:</span> <strong>{prod.finish || 'High Gloss'}</strong>
                       </div>
                     </div>
 
-                    <div className="card-actions">
-                      <button 
-                        className="btn-sm-calc"
-                        onClick={() => onOpenCalc(prod)}
-                      >
-                        <Calculator size={14} /> Calculate
-                      </button>
+                    <div className="card-footer">
+                      <div className="price-tag">
+                        <span className="currency">₹</span>
+                        <span className="amount">{prod.price.toLocaleString('en-IN')}</span>
+                        <span className="unit">/{displayUnit}</span>
+                      </div>
+
+                      {prod.category && prod.category.includes('tiles') && (
+                        <button 
+                          className="btn-sm-calc"
+                          onClick={() => onOpenCalc(prod)}
+                          title="Calculate Box & Sq.Ft Requirement"
+                        >
+                          <Calculator size={14} /> Calculate
+                        </button>
+                      )}
+
                       <button 
                         className="btn-sm-inquire"
                         onClick={() => onInquire(prod, `Inquiry for ${prod.name}`)}
@@ -147,7 +135,11 @@ export default function CustomerStore({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.88rem', marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-dark)' }}>
                 <Phone size={16} style={{ color: 'var(--text-dark)' }} />
-                <strong>Call / WhatsApp:</strong> +91 60013 99842
+                <strong>Call / WhatsApp:</strong> +91 70993 14333
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-dark)' }}>
+                <Mail size={16} style={{ color: 'var(--text-dark)' }} />
+                <strong>Email:</strong> mrtilesandsanitation@gmail.com
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-dark)' }}>
                 <Clock size={16} style={{ color: 'var(--text-dark)' }} />

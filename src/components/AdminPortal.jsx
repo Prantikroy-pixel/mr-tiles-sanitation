@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, Plus, Trash2, Edit2, Check, X, AlertTriangle, Settings, Save, Tag } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, X, AlertTriangle, Settings, Save, Tag } from 'lucide-react';
 import { compressImageFile } from '../utils/imageCompressor';
 
 export default function AdminPortal({ 
@@ -59,20 +59,6 @@ export default function AdminPortal({
     } finally {
       setIsCompressing(false);
     }
-  };
-
-  const exportLeadsCsv = () => {
-    const csvHeader = 'Item Name,Category,Price (INR),Stock Quantity,Unit,Status\n';
-    const csvRows = products.map(p => {
-      const status = p.stock <= 0 ? 'Out of Stock' : (p.stock <= (p.minStock || 10) ? 'Low Stock' : 'In Stock');
-      return `"${p.name}","${p.categoryLabel || p.category}",${p.price},${p.stock},"${p.unit || 'sq.ft'}","${status}"`;
-    }).join('\n');
-
-    const blob = new Blob([csvHeader + csvRows], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `MR_Tiles_Inventory_Report_${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
   };
 
   const handleLoginSubmit = (e) => {
@@ -207,15 +193,12 @@ export default function AdminPortal({
       <div className="admin-header" style={{ marginBottom: '1.25rem' }}>
         <div>
           <h1 style={{ fontSize: '1.5rem', color: '#0f172a' }}>Stock & Price Control Center</h1>
-          <p style={{ fontSize: '0.82rem', color: '#64748b' }}>Manage inventory, delete items, edit category names, and export leads</p>
+          <p style={{ fontSize: '0.82rem', color: '#64748b' }}>Manage inventory, delete items, edit/delete categories, and control stock</p>
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', width: '100%', marginTop: '0.75rem' }}>
-          <button className="btn-secondary" onClick={exportLeadsCsv} style={{ padding: '0.55rem 0.8rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center' }}>
-            <Download size={14} /> Export CSV
-          </button>
           <button className="btn-secondary" onClick={() => setShowManageCatsModal(true)} style={{ padding: '0.55rem 0.8rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center' }}>
-            <Settings size={14} /> Edit Category Names
+            <Settings size={14} /> Edit & Delete Categories
           </button>
           <button className="btn-secondary" onClick={() => setShowAddCatModal(true)} style={{ padding: '0.55rem 0.8rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center' }}>
             <Plus size={14} /> Add Category
@@ -236,11 +219,11 @@ export default function AdminPortal({
         </div>
       )}
 
-      {/* Main Screen Category Rename Toolbar */}
+      {/* Accessible Category Control Toolbar */}
       <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1rem', marginBottom: '1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
           <Tag size={16} style={{ color: '#2563eb' }} />
-          <h3 style={{ fontSize: '0.95rem', color: '#0f172a', fontWeight: '700', margin: 0 }}>Category Names Control (Click Edit to Rename Any Category)</h3>
+          <h3 style={{ fontSize: '0.95rem', color: '#0f172a', fontWeight: '700', margin: 0 }}>Category List & Controls (Edit Name or Delete Any Category)</h3>
         </div>
 
         <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
@@ -271,10 +254,20 @@ export default function AdminPortal({
                       className="btn-icon" 
                       style={{ width: '24px', height: '24px', padding: 0, border: 'none', background: '#f1f5f9', color: '#2563eb' }} 
                       onClick={() => { setEditingCatId(c.id); setEditingCatLabel(c.label); }} 
-                      title={`Edit name for ${c.label}`}
+                      title={`Rename category ${c.label}`}
                     >
                       <Edit2 size={12} />
                     </button>
+                    {onDeleteCategory && (
+                      <button 
+                        className="btn-icon delete" 
+                        style={{ width: '24px', height: '24px', padding: 0, border: 'none', color: '#c5221f' }} 
+                        onClick={() => onDeleteCategory(c.id)} 
+                        title={`Delete category ${c.label}`}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
                   </>
                 )}
               </div>
@@ -514,8 +507,8 @@ export default function AdminPortal({
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '460px', width: '92%' }}>
             <button className="modal-close" onClick={() => setShowManageCatsModal(false)}>✕</button>
 
-            <h3 style={{ fontSize: '1.2rem', color: '#0f172a', marginBottom: '0.3rem' }}>Edit Category Names</h3>
-            <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '1rem' }}>Rename any category section (e.g. change "Floor Tiles" to "Italian Floor Tiles")</p>
+            <h3 style={{ fontSize: '1.2rem', color: '#0f172a', marginBottom: '0.3rem' }}>Edit & Delete Category Sections</h3>
+            <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '1rem' }}>Rename or delete any category section (including default sections)</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {categories.filter(c => c.id !== 'all').map(c => {

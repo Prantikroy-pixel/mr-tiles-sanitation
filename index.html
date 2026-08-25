@@ -149,99 +149,8 @@
         return <img src={imgSrc || defaultFallback} alt={alt} className={className} loading="lazy" onError={handleError} />;
       }
 
-      // Initial Catalog Dataset
-      const INITIAL_PRODUCTS = [
-        {
-          id: "prod_1",
-          name: "Regal White Marble",
-          category: "floor-tiles",
-          categoryLabel: "Floor Tiles",
-          price: 70,
-          unit: "sq.ft",
-          stock: 1800,
-          minStock: 100,
-          dimensions: "2x4 ft (600x1200 mm)",
-          finish: "High Gloss Polished",
-          material: "Vitrified Porcelain",
-          image: "images/regal-white-marble.png",
-          description: "Luxurious white marble finish vitrified tiles with elegant gold and subtle grey veining."
-        },
-        {
-          id: "prod_2",
-          name: "Moroccan Grey",
-          category: "floor-tiles",
-          categoryLabel: "Floor Tiles",
-          price: 55,
-          unit: "sq.ft",
-          stock: 850,
-          minStock: 100,
-          dimensions: "2x2 ft (600x600 mm)",
-          finish: "Satin Matt Anti-Skid",
-          material: "Glazed Vitrified",
-          image: "images/moroccan-grey.png",
-          description: "Contemporary grey porcelain floor tile with subtle tactile pattern. Anti-skid and durable."
-        },
-        {
-          id: "prod_3",
-          name: "Wall Hung Basin",
-          category: "sanitary",
-          categoryLabel: "Sanitary",
-          price: 4850,
-          unit: "piece",
-          stock: 24,
-          minStock: 5,
-          dimensions: "450 x 350 x 130 mm",
-          finish: "Glossy Ceramic White",
-          material: "Vitreous China Ceramic",
-          image: "images/wall-hung-basin.png",
-          description: "Minimalist wall-mounted wash basin with integrated tap hole and overflow ring."
-        },
-        {
-          id: "prod_4",
-          name: "Smart Commode",
-          category: "sanitary",
-          categoryLabel: "Sanitary",
-          price: 6950,
-          unit: "piece",
-          stock: 12,
-          minStock: 3,
-          dimensions: "680 x 390 x 750 mm",
-          finish: "Antibacterial Glaze",
-          material: "Dual Flush Ceramic",
-          image: "images/smart-commode.png",
-          description: "Premium dual-flush rimless smart commode with soft-close seat lid."
-        },
-        {
-          id: "prod_5",
-          name: "Onyx Gold Wall Tile",
-          category: "wall-tiles",
-          categoryLabel: "Wall Tiles",
-          price: 72,
-          unit: "sq.ft",
-          stock: 600,
-          minStock: 80,
-          dimensions: "1x2 ft (300x600 mm)",
-          finish: "High Gloss Mirror Finish",
-          material: "Ceramic Wall Tile",
-          image: "images/regal-white-marble.png",
-          description: "Rich onyx crystal pattern wall tile designed for luxury bathroom accent walls."
-        },
-        {
-          id: "prod_6",
-          name: "Luxury Teak Finish Designer Door",
-          category: "doors",
-          categoryLabel: "Doors",
-          price: 8500,
-          unit: "piece",
-          stock: 15,
-          minStock: 3,
-          dimensions: "7x3 ft (84x36 in)",
-          finish: "Waterproof WPC Teak Finish",
-          material: "Wood Polymer Composite",
-          image: "images/moroccan-grey.png",
-          description: "Termite proof, 100% waterproof heavy duty WPC designer entry door."
-        }
-      ];
+      // Default Products Master List (Initial State empty to ensure deleted default items never resurrect)
+      const INITIAL_PRODUCTS = [];
 
       // Header Component (Clean, no icons)
       function Header({ currentView, setCurrentView, adminToken, onLogout }) {
@@ -251,23 +160,23 @@
               <div className="brand-logo" style={{ cursor: 'pointer' }} onClick={() => setCurrentView('store')}>
                 <div className="logo-icon">MR</div>
                 <div>
-                  <div className="brand-title">M R TILES & SANITATION</div>
-                  <div className="brand-subtitle">Silchar, Assam • Premium Tiles & Sanitaryware</div>
+                  <div className="brand-title" style={{ fontSize: '1.25rem', fontWeight: '800', letterSpacing: '0.02em', color: '#0f172a' }}>M R TILES AND SANITATION SILCHAR</div>
+                  <div className="brand-subtitle" style={{ fontSize: '0.78rem', color: '#64748b' }}>Silchar, Assam • Premium Tiles & Sanitaryware</div>
                 </div>
               </div>
 
               <div className="nav-links">
                 {adminToken ? (
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <button className={`nav-btn ${currentView === 'admin' ? 'active' : ''}`} onClick={() => setCurrentView('admin')}>
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                    <button className={`nav-btn ${currentView === 'admin' ? 'active' : ''}`} style={{ padding: '0.25rem 0.5rem', fontSize: '0.72rem', borderRadius: '4px' }} onClick={() => setCurrentView('admin')}>
                       Admin Dashboard
                     </button>
-                    <button className="btn-secondary" style={{ padding: '0.45rem 0.75rem', fontSize: '0.8rem' }} onClick={onLogout}>
+                    <button className="btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.72rem', borderRadius: '4px' }} onClick={onLogout}>
                       Logout
                     </button>
                   </div>
                 ) : (
-                  <button className="admin-nav-btn" onClick={() => setCurrentView('admin')}>
+                  <button className="admin-nav-btn" style={{ padding: '0.25rem 0.5rem', fontSize: '0.72rem', borderRadius: '4px' }} onClick={() => setCurrentView('admin')}>
                     Admin Portal
                   </button>
                 )}
@@ -590,7 +499,7 @@
               
               <div className="hero-actions">
                 <button className="btn-primary" onClick={() => onOpenCalc(null)}>Tile & Budget Calculator</button>
-                <button className="btn-secondary" onClick={onDownloadPdf}>📄 Download Catalog (PDF)</button>
+                <button className="btn-secondary" onClick={onDownloadPdf}>📄 Download Catalogue (PDF)</button>
               </div>
             </section>
 
@@ -646,7 +555,8 @@
                 <div>
                   <h2 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '0.5rem' }}>M R Tiles & Sanitation</h2>
                   <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1rem' }}>Trinayani Ln, near Karan TVS Showroom, Kanakpur, Silchar, Assam - 788006</p>
-                  <p style={{ fontSize: '0.88rem', color: '#0f172a', fontWeight: 'bold' }}>Call / WhatsApp: +91 60013 99842</p>
+                  <p style={{ fontSize: '0.88rem', color: '#0f172a', fontWeight: 'bold' }}>Call / WhatsApp: +91 70993 14333</p>
+                  <p style={{ fontSize: '0.85rem', color: '#475569', marginTop: '0.2rem' }}>Email: mrtilesandsanitation@gmail.com</p>
                 </div>
                 <div style={{ borderRadius: '8px', overflow: 'hidden', minHeight: '300px' }}>
                   <iframe title="Showroom Location Map" src="https://maps.google.com/maps?q=M+R+TILES+AND+SANITATION,+Trinayani+Ln,+near+Karan+TVS+Showroom,+Kanakpur,+Silchar,+Assam+788006&t=&z=16&ie=UTF8&iwloc=&output=embed" width="100%" height="100%" style={{ border: 0, minHeight: '300px' }} loading="lazy" />

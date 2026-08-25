@@ -21,7 +21,7 @@ export default function App() {
         if (Array.isArray(parsed)) return parsed;
       }
     } catch (e) {}
-    return DEFAULT_PRODUCTS;
+    return [];
   });
 
   const [filteredProducts, setFilteredProducts] = useState(allProducts);
