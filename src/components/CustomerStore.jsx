@@ -1,5 +1,5 @@
-import React from 'react';
-import { Calculator, MapPin, Phone, Clock, Download, Mail, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calculator, MapPin, Phone, Clock, Download, Mail, ArrowRight, Maximize2, X, ZoomIn } from 'lucide-react';
 
 export default function CustomerStore({ 
   products = [], 
@@ -10,6 +10,8 @@ export default function CustomerStore({
   onInquire, 
   onDownloadPdf 
 }) {
+  const [previewProduct, setPreviewProduct] = useState(null);
+
   return (
     <main>
       {/* Premium Hero Section */}
@@ -75,11 +77,17 @@ export default function CustomerStore({
 
               return (
                 <div key={prod.id} className="product-card">
-                  <div className="card-image-wrap">
+                  <div 
+                    className="card-image-wrap" 
+                    style={{ cursor: 'pointer', position: 'relative' }} 
+                    onClick={() => setPreviewProduct(prod)}
+                    title="Click to view full photo"
+                  >
                     <img 
                       className="card-img"
                       src={displayImg} 
                       alt={prod.name} 
+                      style={{ objectFit: 'contain', background: '#f8fafc', padding: '4px' }}
                       onError={e => { e.target.src = 'images/regal-white-marble.png'; }}
                     />
                     <span className={`stock-badge ${stockClass}`}>
@@ -88,6 +96,31 @@ export default function CustomerStore({
                     <span className="category-tag">
                       {prod.categoryLabel || prod.category}
                     </span>
+                    
+                    {/* Zoom Photo Overlay Icon */}
+                    <button 
+                      type="button" 
+                      style={{ 
+                        position: 'absolute', 
+                        bottom: '0.65rem', 
+                        right: '0.65rem', 
+                        background: 'rgba(15, 23, 42, 0.85)', 
+                        color: '#ffffff', 
+                        border: 'none', 
+                        borderRadius: '20px', 
+                        padding: '0.25rem 0.65rem', 
+                        fontSize: '0.72rem', 
+                        fontWeight: '700', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.3rem', 
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                        backdropFilter: 'blur(2px)'
+                      }}
+                      onClick={(e) => { e.stopPropagation(); setPreviewProduct(prod); }}
+                    >
+                      <ZoomIn size={13} /> View Full
+                    </button>
                   </div>
 
                   <div className="card-body">
@@ -139,6 +172,86 @@ export default function CustomerStore({
           </div>
         )}
       </section>
+
+      {/* Full-Screen Image Lightbox Preview Modal */}
+      {previewProduct && (
+        <div className="modal-overlay" onClick={() => setPreviewProduct(null)} style={{ background: 'rgba(15, 23, 42, 0.88)', zIndex: 9999 }}>
+          <div 
+            className="modal-content" 
+            onClick={e => e.stopPropagation()} 
+            style={{ 
+              maxWidth: '820px', 
+              width: '94vw', 
+              maxHeight: '92vh', 
+              padding: '1.25rem', 
+              background: '#ffffff', 
+              borderRadius: '12px', 
+              display: 'flex', 
+              flexDirection: 'column',
+              overflowY: 'auto'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', color: '#0f172a', fontWeight: '800' }}>{previewProduct.name}</h3>
+                <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                  {previewProduct.categoryLabel || previewProduct.category} • {previewProduct.dimensions || 'Standard Size'}
+                </span>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setPreviewProduct(null)}
+                style={{ background: '#f1f5f9', color: '#0f172a', border: 'none', width: '32px', height: '32px', borderRadius: '50%', fontSize: '1.1rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* High-Res Full Image Container */}
+            <div style={{ width: '100%', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', padding: '0.75rem', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px', maxHeight: '55vh', marginBottom: '1rem' }}>
+              <img 
+                src={previewProduct.image || 'images/regal-white-marble.png'} 
+                alt={previewProduct.name} 
+                style={{ maxWidth: '100%', maxHeight: '50vh', objectFit: 'contain', borderRadius: '4px' }}
+                onError={e => { e.target.src = 'images/regal-white-marble.png'; }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', paddingTop: '0.5rem', borderTop: '1px solid #e2e8f0' }}>
+              <div>
+                <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#0f172a' }}>
+                  ₹{previewProduct.price ? previewProduct.price.toLocaleString('en-IN') : 0} 
+                  <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>/{previewProduct.unit || 'sq.ft'}</span>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: '#475569' }}>
+                  Finish: <strong>{previewProduct.finish || 'Polished'}</strong> • Stock: <strong>{previewProduct.stock} {previewProduct.unit || 'sq.ft'}</strong>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {previewProduct.category && previewProduct.category.includes('tiles') && (
+                  <button 
+                    type="button" 
+                    className="btn-secondary"
+                    onClick={() => { setPreviewProduct(null); onOpenCalc(previewProduct); }}
+                    style={{ padding: '0.65rem 1rem' }}
+                  >
+                    <Calculator size={16} /> Calculate Requirement
+                  </button>
+                )}
+                <button 
+                  type="button" 
+                  className="btn-whatsapp"
+                  onClick={() => { setPreviewProduct(null); onInquire(previewProduct, `Inquiry for ${previewProduct.name}`); }}
+                  style={{ padding: '0.65rem 1.1rem' }}
+                >
+                  💬 Request Quote on WhatsApp
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Showroom Location & Contact Details Banner */}
       <section style={{ maxWidth: '1200px', margin: '3rem auto', padding: '0 1.5rem' }}>
