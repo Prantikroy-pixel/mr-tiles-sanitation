@@ -4,25 +4,26 @@ import CustomerStore from './components/CustomerStore.jsx';
 import AdminPortal from './components/AdminPortal.jsx';
 import TileCalculatorModal from './components/TileCalculatorModal.jsx';
 import InquiryModal from './components/InquiryModal.jsx';
+import { DEFAULT_PRODUCTS } from './data/defaultProducts.js';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('store');
   
-  // Safe Product State Loader with Permanent Local Storage SSOT
+  // Safe Product State Loader with Fallback to DEFAULT_PRODUCTS
   const [allProducts, setAllProducts] = useState(() => {
     try {
       const saved = localStorage.getItem('mr_tiles_permanent_catalog_v12');
       if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch (e) {}
-    return [];
+    return DEFAULT_PRODUCTS;
   });
 
   const [filteredProducts, setFilteredProducts] = useState(allProducts);
 
-  // Category State Loader with Permanent Local Storage SSOT
+  // Category State Loader with Fallback
   const [categories, setCategories] = useState(() => {
     try {
       const savedCats = localStorage.getItem('mr_tiles_custom_categories_v12');
@@ -154,7 +155,7 @@ export default function App() {
     } catch (err) {}
   };
 
-  // Run initial fetch on mount only to prevent overwriting active user edits
+  // Run initial fetch on mount only
   useEffect(() => {
     fetchLiveCloudProducts();
     fetchLiveCategories();
