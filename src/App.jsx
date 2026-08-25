@@ -16,9 +16,9 @@ export default function App() {
   const [allProducts, setAllProducts] = useState(() => {
     try {
       const saved = localStorage.getItem('mr_tiles_permanent_catalog_v12');
-      if (saved) {
+      if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
     } catch (e) {}
     return DEFAULT_PRODUCTS;
@@ -315,6 +315,28 @@ export default function App() {
     setShowInquireModal(true);
   };
 
+  // Handle Category Rename Customization
+  const handleUpdateCategory = (catId, newLabel) => {
+    const updatedCats = categories.map(c => c.id === catId ? { ...c, label: newLabel } : c);
+    setCategories(updatedCats);
+    try {
+      localStorage.setItem('mr_tiles_custom_categories_v10', JSON.stringify(updatedCats));
+    } catch (e) {}
+
+    // Update matching products category labels
+    const updatedProds = allProducts.map(p => p.category === catId ? { ...p, categoryLabel: newLabel } : p);
+    saveProductsList(updatedProds);
+  };
+
+  const handleDeleteCategory = (catId) => {
+    if (!window.confirm('Delete this category section? Products will remain accessible.')) return;
+    const updatedCats = categories.filter(c => c.id !== catId);
+    setCategories(updatedCats);
+    try {
+      localStorage.setItem('mr_tiles_custom_categories_v10', JSON.stringify(updatedCats));
+    } catch (e) {}
+  };
+
   return (
     <div className="app-container">
       <Header 
@@ -344,6 +366,8 @@ export default function App() {
           onAddProduct={handleAddProduct}
           onDeleteProduct={handleDeleteProduct}
           onAddCategory={handleAddCategory}
+          onUpdateCategory={handleUpdateCategory}
+          onDeleteCategory={handleDeleteCategory}
         />
       )}
 

@@ -405,9 +405,9 @@
         const [products, setProducts] = useState(() => {
           try {
             const local = localStorage.getItem('mr_tiles_permanent_catalog_v12');
-            if (local) {
+            if (local !== null) {
               const parsed = JSON.parse(local);
-              if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+              if (Array.isArray(parsed)) return parsed;
             }
           } catch(e) {}
           return INITIAL_PRODUCTS;
@@ -522,6 +522,27 @@
           } catch(e) {}
         };
 
+        // Category Rename & Delete Handlers
+        const updateCategory = (catId, newLabel) => {
+          const updatedCats = categories.map(c => c.id === catId ? { ...c, label: newLabel } : c);
+          setCategories(updatedCats);
+          try {
+            localStorage.setItem('mr_tiles_custom_categories_v10', JSON.stringify(updatedCats));
+          } catch(e) {}
+
+          const updatedProds = products.map(p => p.category === catId ? { ...p, categoryLabel: newLabel } : p);
+          pushToCloud(updatedProds);
+        };
+
+        const deleteCategory = (catId) => {
+          if (!window.confirm('Delete category section?')) return;
+          const updatedCats = categories.filter(c => c.id !== catId);
+          setCategories(updatedCats);
+          try {
+            localStorage.setItem('mr_tiles_custom_categories_v10', JSON.stringify(updatedCats));
+          } catch(e) {}
+        };
+
         const filtered = products.filter(p => activeCategory === 'all' || p.category === activeCategory);
 
         return (
@@ -531,7 +552,7 @@
             {currentView === 'store' ? (
               <CustomerStore products={filtered} categories={categories} activeCategory={activeCategory} setActiveCategory={setActiveCategory} onOpenCalc={p => { setCalcProduct(p); setShowCalcModal(true); }} onInquire={(p, note) => { setInquireProduct(p); setInquireNote(note || ''); setShowInquireModal(true); }} onDownloadPdf={() => window.print()} />
             ) : (
-              <AdminPortal products={products} categories={categories} adminToken={adminToken} onLogin={token => setAdminToken(token)} onUpdateProduct={(id, payload) => pushToCloud(products.map(p => p.id === id ? { ...p, ...payload, unit: payload.unit || p.unit || 'sq.ft' } : p))} onAddProduct={p => pushToCloud([{ id: 'prod_' + Date.now(), unit: p.unit || 'sq.ft', image: p.image || 'images/regal-white-marble.png', ...p }, ...products])} onDeleteProduct={deleteProduct} onAddCategory={c => setCategories(prev => [...prev, c])} />
+              <AdminPortal products={products} categories={categories} adminToken={adminToken} onLogin={token => setAdminToken(token)} onUpdateProduct={(id, payload) => pushToCloud(products.map(p => p.id === id ? { ...p, ...payload, unit: payload.unit || p.unit || 'sq.ft' } : p))} onAddProduct={p => pushToCloud([{ id: 'prod_' + Date.now(), unit: p.unit || 'sq.ft', image: p.image || 'images/regal-white-marble.png', ...p }, ...products])} onDeleteProduct={deleteProduct} onAddCategory={c => setCategories(prev => [...prev, c])} onUpdateCategory={updateCategory} onDeleteCategory={deleteCategory} />
             )}
 
             {/* Modals rendered cleanly */}
