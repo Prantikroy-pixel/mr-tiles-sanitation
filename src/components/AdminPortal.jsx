@@ -189,8 +189,8 @@ export default function AdminPortal({
               />
             </div>
 
-            <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.75rem', fontSize: '1rem' }}>
-              Log In to Control Panel
+            <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.75rem', fontSize: '1rem', cursor: 'pointer' }}>
+              Log In
             </button>
           </form>
         </div>

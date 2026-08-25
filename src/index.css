@@ -923,16 +923,12 @@ a {
     max-width: 100%;
   }
 
-  .catalog-section {
-    padding: 0 1rem;
-  }
-
   .product-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   }
 
   .admin-container {
-    padding: 0 1rem;
+    padding: 0 0.85rem;
   }
 
   .admin-header {
@@ -942,6 +938,29 @@ a {
 
   .admin-header > div {
     width: 100%;
+  }
+
+  /* Admin Login Portal Smartphone Responsiveness */
+  .admin-login-wrapper {
+    padding: 1rem 0.5rem;
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .admin-login-box {
+    width: 100% !important;
+    max-width: 380px !important;
+    padding: 1.25rem !important;
+    border-radius: 12px !important;
+  }
+
+  .modal-content {
+    padding: 1.25rem !important;
+    max-width: 95vw !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
   }
 
   .ai-widget {
@@ -956,3 +975,23 @@ a {
     height: 420px;
   }
 }
+
+@media (max-width: 480px) {
+  .hero-heading {
+    font-size: 1.65rem;
+  }
+
+  .brand-title {
+    font-size: 0.88rem;
+  }
+
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-primary, .btn-secondary, .btn-whatsapp {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
