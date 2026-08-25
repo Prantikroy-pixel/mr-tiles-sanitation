@@ -197,8 +197,6 @@ export default function App() {
 
   // Handle Category Deletion Across Devices
   const handleDeleteCategory = async (catId) => {
-    if (!window.confirm('Are you sure you want to delete this category section? Products under this category will remain accessible under All Products.')) return;
-    
     const updatedCats = categories.filter(c => c.id !== catId);
     if (activeCategory === catId) setActiveCategory('all');
     await saveCategoriesList(updatedCats);
@@ -317,8 +315,6 @@ export default function App() {
 
   // Admin Delete Product Across Devices
   const handleDeleteProduct = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this product from stock inventory?')) return;
-    
     const updatedList = allProducts.filter(p => p.id !== id);
     await saveProductsList(updatedList);
 

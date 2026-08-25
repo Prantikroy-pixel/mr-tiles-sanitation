@@ -3,8 +3,8 @@ import { Plus, Trash2, Edit2, Check, X, AlertTriangle, Settings, Save, Tag } fro
 import { compressImageFile } from '../utils/imageCompressor';
 
 export default function AdminPortal({ 
-  products, 
-  categories, 
+  products = [], 
+  categories = [], 
   adminToken, 
   onLogin, 
   onUpdateProduct, 
@@ -62,7 +62,7 @@ export default function AdminPortal({
   };
 
   const handleLoginSubmit = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setLoginError('');
     if (username === 'Admin11' && password === 'Admin1234') {
       onLogin('mr_admin_token_' + Date.now());
@@ -80,17 +80,21 @@ export default function AdminPortal({
   };
 
   const saveEdit = (id) => {
+    if (!editName.trim()) {
+      alert('Stock item name cannot be empty!');
+      return;
+    }
     onUpdateProduct(id, {
-      name: editName,
-      price: Number(editPrice),
-      stock: Number(editStock),
+      name: editName.trim(),
+      price: Number(editPrice) || 0,
+      stock: Number(editStock) || 0,
       unit: editUnit || 'sq.ft'
     });
     setEditingId(null);
   };
 
   const handleAddSubmit = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!newName || !newPrice || !newStock) {
       alert('Please fill in product name, price, and stock!');
       return;
@@ -99,7 +103,7 @@ export default function AdminPortal({
     const matchedCat = categories.find(c => c.id === newCategory);
 
     onAddProduct({
-      name: newName,
+      name: newName.trim(),
       category: newCategory,
       categoryLabel: matchedCat ? matchedCat.label : newCategory,
       price: Number(newPrice),
@@ -120,18 +124,26 @@ export default function AdminPortal({
   };
 
   const handleAddCategorySubmit = (e) => {
-    e.preventDefault();
-    if (!newCatLabel.trim()) return;
-    const catId = newCatLabel.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    onAddCategory({ id: catId, label: newCatLabel });
+    if (e) e.preventDefault();
+    const labelTrimmed = newCatLabel.trim();
+    if (!labelTrimmed) {
+      alert('Please enter a category name!');
+      return;
+    }
+    const catId = labelTrimmed.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    onAddCategory({ id: catId, label: labelTrimmed });
     setShowAddCatModal(false);
     setNewCatLabel('');
   };
 
   const handleSaveCatRename = (catId) => {
-    if (!editingCatLabel.trim()) return;
+    const trimmed = editingCatLabel.trim();
+    if (!trimmed) {
+      alert('Category name cannot be empty!');
+      return;
+    }
     if (onUpdateCategory) {
-      onUpdateCategory(catId, editingCatLabel);
+      onUpdateCategory(catId, trimmed);
     }
     setEditingCatId(null);
     setEditingCatLabel('');
@@ -152,31 +164,31 @@ export default function AdminPortal({
 
           <form onSubmit={handleLoginSubmit}>
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', fontSize: '0.82rem', color: '#64748b', marginBottom: '0.3rem', fontWeight: '600' }}>Username</label>
+              <label style={{ display: 'block', fontSize: '0.8rem', color: '#64748b', marginBottom: '0.2rem' }}>Username</label>
               <input 
                 type="text" 
                 required 
-                placeholder="Enter admin username" 
+                placeholder="Enter username" 
                 value={username} 
                 onChange={e => setUsername(e.target.value)} 
-                style={{ width: '100%', padding: '0.65rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a', fontSize: '1rem', WebkitAppearance: 'none' }} 
+                style={{ width: '100%', padding: '0.65rem', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '1rem', color: '#0f172a' }} 
               />
             </div>
 
             <div style={{ marginBottom: '1.25rem' }}>
-              <label style={{ display: 'block', fontSize: '0.82rem', color: '#64748b', marginBottom: '0.3rem', fontWeight: '600' }}>Password</label>
+              <label style={{ display: 'block', fontSize: '0.8rem', color: '#64748b', marginBottom: '0.2rem' }}>Password</label>
               <input 
                 type="password" 
                 required 
-                placeholder="Enter admin password" 
+                placeholder="Enter password" 
                 value={password} 
                 onChange={e => setPassword(e.target.value)} 
-                style={{ width: '100%', padding: '0.65rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a', fontSize: '1rem', WebkitAppearance: 'none' }} 
+                style={{ width: '100%', padding: '0.65rem', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '1rem', color: '#0f172a' }} 
               />
             </div>
 
-            <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.75rem', fontSize: '0.95rem' }}>
-              Sign In to Dashboard
+            <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.75rem', fontSize: '1rem' }}>
+              Log In to Control Panel
             </button>
           </form>
         </div>
@@ -184,9 +196,8 @@ export default function AdminPortal({
     );
   }
 
-  // Calculate Low Stock Safety Items
-  const lowStockItems = products.filter(p => p.stock > 0 && p.stock <= (p.minStock || 10));
-  const outOfStockItems = products.filter(p => p.stock <= 0);
+  const lowStockItems = products.filter(p => p.stock > 0 && p.stock < (p.minStock || 10));
+  const outOfStockItems = products.filter(p => p.stock === 0);
 
   return (
     <div className="admin-container" style={{ padding: '1rem' }}>
@@ -197,13 +208,13 @@ export default function AdminPortal({
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', width: '100%', marginTop: '0.75rem' }}>
-          <button className="btn-secondary" onClick={() => setShowManageCatsModal(true)} style={{ padding: '0.55rem 0.8rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center' }}>
+          <button type="button" className="btn-secondary" onClick={() => setShowManageCatsModal(true)} style={{ padding: '0.55rem 0.8rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center' }}>
             <Settings size={14} /> Edit & Delete Categories
           </button>
-          <button className="btn-secondary" onClick={() => setShowAddCatModal(true)} style={{ padding: '0.55rem 0.8rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center' }}>
+          <button type="button" className="btn-secondary" onClick={() => setShowAddCatModal(true)} style={{ padding: '0.55rem 0.8rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center' }}>
             <Plus size={14} /> Add Category
           </button>
-          <button className="btn-primary" onClick={() => setShowAddModal(true)} style={{ padding: '0.55rem 0.8rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center' }}>
+          <button type="button" className="btn-primary" onClick={() => setShowAddModal(true)} style={{ padding: '0.55rem 0.8rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center' }}>
             <Plus size={16} /> Add Tile / Stock
           </button>
         </div>
@@ -240,32 +251,34 @@ export default function AdminPortal({
                       onChange={e => setEditingCatLabel(e.target.value)} 
                       style={{ padding: '0.2rem 0.4rem', border: '1px solid #2563eb', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold', width: '140px', color: '#0f172a' }}
                     />
-                    <button className="btn-icon" style={{ background: '#16a34a', color: '#fff', width: '24px', height: '24px', padding: 0 }} onClick={() => handleSaveCatRename(c.id)} title="Save Category Name">
-                      <Save size={12} />
+                    <button type="button" className="btn-icon" style={{ background: '#16a34a', color: '#fff', width: '26px', height: '26px', padding: 0, border: 'none', borderRadius: '4px' }} onClick={() => handleSaveCatRename(c.id)} title="Save Category Name">
+                      <Save size={14} />
                     </button>
-                    <button className="btn-icon" style={{ width: '24px', height: '24px', padding: 0 }} onClick={() => setEditingCatId(null)}>
-                      <X size={12} />
+                    <button type="button" className="btn-icon" style={{ width: '26px', height: '26px', padding: 0, border: 'none', borderRadius: '4px' }} onClick={() => setEditingCatId(null)}>
+                      <X size={14} />
                     </button>
                   </>
                 ) : (
                   <>
                     <span style={{ fontWeight: '600', color: '#0f172a' }}>{c.label}</span>
                     <button 
+                      type="button"
                       className="btn-icon" 
-                      style={{ width: '24px', height: '24px', padding: 0, border: 'none', background: '#f1f5f9', color: '#2563eb' }} 
+                      style={{ width: '26px', height: '26px', padding: 0, border: 'none', background: '#f1f5f9', color: '#2563eb', borderRadius: '4px', cursor: 'pointer' }} 
                       onClick={() => { setEditingCatId(c.id); setEditingCatLabel(c.label); }} 
                       title={`Rename category ${c.label}`}
                     >
-                      <Edit2 size={12} />
+                      <Edit2 size={13} />
                     </button>
                     {onDeleteCategory && (
                       <button 
+                        type="button"
                         className="btn-icon delete" 
-                        style={{ width: '24px', height: '24px', padding: 0, border: 'none', color: '#c5221f' }} 
+                        style={{ width: '26px', height: '26px', padding: 0, border: 'none', background: '#fee2e2', color: '#c5221f', borderRadius: '4px', cursor: 'pointer' }} 
                         onClick={() => onDeleteCategory(c.id)} 
                         title={`Delete category ${c.label}`}
                       >
-                        <Trash2 size={12} />
+                        <Trash2 size={13} />
                       </button>
                     )}
                   </>
@@ -308,7 +321,7 @@ export default function AdminPortal({
                             type="text"
                             value={editName}
                             onChange={e => setEditName(e.target.value)}
-                            style={{ padding: '0.25rem', border: '1px solid #2563eb', borderRadius: '4px', color: '#0f172a', fontWeight: 'bold', width: '120px' }}
+                            style={{ padding: '0.25rem', border: '1px solid #2563eb', borderRadius: '4px', color: '#0f172a', fontWeight: 'bold', width: '140px' }}
                           />
                         ) : (
                           <div style={{ fontWeight: 'bold', color: '#0f172a', fontSize: '0.85rem' }}>{p.name}</div>
@@ -324,7 +337,7 @@ export default function AdminPortal({
                     {isEditing ? (
                       <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} style={{ width: '65px', padding: '0.2rem' }} />
                     ) : (
-                      `₹${p.price.toLocaleString('en-IN')}/${displayUnit}`
+                      `₹${p.price ? p.price.toLocaleString('en-IN') : 0}/${displayUnit}`
                     )}
                   </td>
 
@@ -337,22 +350,22 @@ export default function AdminPortal({
                   </td>
 
                   <td>
-                    <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
+                    <div className="table-actions" style={{ justifyContent: 'flex-end', display: 'flex', gap: '0.4rem' }}>
                       {isEditing ? (
                         <>
-                          <button className="btn-icon" style={{ background: '#16a34a', color: '#fff' }} onClick={() => saveEdit(p.id)} title="Save">
+                          <button type="button" className="btn-icon" style={{ background: '#16a34a', color: '#fff', padding: '0.4rem 0.6rem', border: 'none', borderRadius: '4px', cursor: 'pointer' }} onClick={() => saveEdit(p.id)} title="Save">
                             <Check size={16} />
                           </button>
-                          <button className="btn-icon" onClick={() => setEditingId(null)} title="Cancel">
+                          <button type="button" className="btn-icon" style={{ padding: '0.4rem 0.6rem', border: '1px solid #cbd5e1', borderRadius: '4px', cursor: 'pointer' }} onClick={() => setEditingId(null)} title="Cancel">
                             <X size={16} />
                           </button>
                         </>
                       ) : (
                         <>
-                          <button className="btn-icon" onClick={() => startEdit(p)} title="Edit">
+                          <button type="button" className="btn-icon" style={{ padding: '0.4rem 0.6rem', border: '1px solid #cbd5e1', borderRadius: '4px', cursor: 'pointer', background: '#f8fafc' }} onClick={() => startEdit(p)} title="Edit">
                             <Edit2 size={16} />
                           </button>
-                          <button className="btn-icon delete" onClick={() => onDeleteProduct(p.id)} title="Delete Item">
+                          <button type="button" className="btn-icon delete" style={{ padding: '0.4rem 0.6rem', border: 'none', background: '#fee2e2', color: '#c5221f', borderRadius: '4px', cursor: 'pointer' }} onClick={() => onDeleteProduct(p.id)} title="Delete Item">
                             <Trash2 size={16} />
                           </button>
                         </>
@@ -370,7 +383,7 @@ export default function AdminPortal({
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px', width: '92%' }}>
-            <button className="modal-close" onClick={() => setShowAddModal(false)}>✕</button>
+            <button type="button" className="modal-close" onClick={() => setShowAddModal(false)}>✕</button>
 
             <h3 style={{ fontSize: '1.2rem', color: '#0f172a', marginBottom: '0.85rem' }}>Introduce New Product / Stock</h3>
 
@@ -378,21 +391,21 @@ export default function AdminPortal({
               <div style={{ marginBottom: '0.75rem' }}>
                 <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Product Name *</label>
                 <input 
-                  type="text"
-                  required
-                  placeholder="e.g. Italian Onyx Vitrified"
-                  value={newName}
-                  onChange={e => setNewName(e.target.value)}
-                  style={{ width: '100%', padding: '0.55rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
+                  type="text" 
+                  required 
+                  placeholder="e.g. Italian White Vitrified" 
+                  value={newName} 
+                  onChange={e => setNewName(e.target.value)} 
+                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }} 
                 />
               </div>
 
               <div style={{ marginBottom: '0.75rem' }}>
                 <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Category Section *</label>
                 <select 
-                  value={newCategory}
-                  onChange={e => setNewCategory(e.target.value)}
-                  style={{ width: '100%', padding: '0.55rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
+                  value={newCategory} 
+                  onChange={e => setNewCategory(e.target.value)} 
+                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
                 >
                   {categories.filter(c => c.id !== 'all').map(c => (
                     <option key={c.id} value={c.id}>{c.label}</option>
@@ -400,66 +413,28 @@ export default function AdminPortal({
                 </select>
               </div>
 
-              <div style={{ marginBottom: '0.85rem' }}>
-                <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.25rem' }}>Upload Product Photo from Device *</label>
-                <div style={{ border: '2px dashed #cbd5e1', borderRadius: '8px', padding: '0.75rem', textAlign: 'center', background: '#f8fafc' }}>
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleImageFileUpload}
-                    id="device-photo-input"
-                    style={{ display: 'none' }}
-                  />
-                  <label 
-                    htmlFor="device-photo-input" 
-                    style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#0f172a', fontWeight: 'bold', fontSize: '0.85rem' }}
-                  >
-                    📸 Select Photo from Device
-                  </label>
-                  {newImage && (
-                    <div style={{ marginTop: '0.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
-                      <img src={newImage} alt="Preview" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
-                      <span style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 'bold' }}>✓ Photo Loaded</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Price (₹)</label>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Price (₹) *</label>
                   <input 
-                    type="number"
-                    required
-                    placeholder="65"
-                    value={newPrice}
-                    onChange={e => setNewPrice(e.target.value)}
-                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
+                    type="number" 
+                    required 
+                    placeholder="75" 
+                    value={newPrice} 
+                    onChange={e => setNewPrice(e.target.value)} 
+                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }} 
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Unit</label>
-                  <select 
-                    value={newUnit}
-                    onChange={e => setNewUnit(e.target.value)}
-                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
-                  >
-                    <option value="sq.ft">sq.ft</option>
-                    <option value="piece">piece</option>
-                    <option value="box">box</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Stock</label>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.2rem' }}>Stock Quantity *</label>
                   <input 
-                    type="number"
-                    required
-                    placeholder="1000"
-                    value={newStock}
-                    onChange={e => setNewStock(e.target.value)}
-                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
+                    type="number" 
+                    required 
+                    placeholder="1200" 
+                    value={newStock} 
+                    onChange={e => setNewStock(e.target.value)} 
+                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }} 
                   />
                 </div>
               </div>
@@ -476,7 +451,7 @@ export default function AdminPortal({
       {showAddCatModal && (
         <div className="modal-overlay" onClick={() => setShowAddCatModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '380px', width: '92%' }}>
-            <button className="modal-close" onClick={() => setShowAddCatModal(false)}>✕</button>
+            <button type="button" className="modal-close" onClick={() => setShowAddCatModal(false)}>✕</button>
 
             <h3 style={{ fontSize: '1.15rem', color: '#0f172a', marginBottom: '0.85rem' }}>Add New Section / Category</h3>
 
@@ -505,7 +480,7 @@ export default function AdminPortal({
       {showManageCatsModal && (
         <div className="modal-overlay" onClick={() => setShowManageCatsModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '460px', width: '92%' }}>
-            <button className="modal-close" onClick={() => setShowManageCatsModal(false)}>✕</button>
+            <button type="button" className="modal-close" onClick={() => setShowManageCatsModal(false)}>✕</button>
 
             <h3 style={{ fontSize: '1.2rem', color: '#0f172a', marginBottom: '0.3rem' }}>Edit & Delete Category Sections</h3>
             <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '1rem' }}>Rename or delete any category section (including default sections)</p>
@@ -530,20 +505,20 @@ export default function AdminPortal({
                     <div style={{ display: 'flex', gap: '0.4rem' }}>
                       {isEditingThis ? (
                         <>
-                          <button className="btn-icon" style={{ background: '#16a34a', color: '#fff' }} onClick={() => handleSaveCatRename(c.id)}>
+                          <button type="button" className="btn-icon" style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.4rem 0.6rem', cursor: 'pointer' }} onClick={() => handleSaveCatRename(c.id)}>
                             <Save size={14} />
                           </button>
-                          <button className="btn-icon" onClick={() => setEditingCatId(null)}>
+                          <button type="button" className="btn-icon" style={{ border: '1px solid #cbd5e1', borderRadius: '4px', padding: '0.4rem 0.6rem', cursor: 'pointer' }} onClick={() => setEditingCatId(null)}>
                             <X size={14} />
                           </button>
                         </>
                       ) : (
                         <>
-                          <button className="btn-icon" onClick={() => { setEditingCatId(c.id); setEditingCatLabel(c.label); }} title="Rename Category">
+                          <button type="button" className="btn-icon" style={{ border: '1px solid #cbd5e1', borderRadius: '4px', padding: '0.4rem 0.6rem', cursor: 'pointer', background: '#ffffff' }} onClick={() => { setEditingCatId(c.id); setEditingCatLabel(c.label); }} title="Rename Category">
                             <Edit2 size={14} />
                           </button>
                           {onDeleteCategory && (
-                            <button className="btn-icon delete" onClick={() => onDeleteCategory(c.id)} title="Delete Category">
+                            <button type="button" className="btn-icon delete" style={{ border: 'none', background: '#fee2e2', color: '#c5221f', borderRadius: '4px', padding: '0.4rem 0.6rem', cursor: 'pointer' }} onClick={() => onDeleteCategory(c.id)} title="Delete Category">
                               <Trash2 size={14} />
                             </button>
                           )}
